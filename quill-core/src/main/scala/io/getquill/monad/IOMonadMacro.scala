@@ -7,5 +7,4 @@ class IOMonadMacro(val c: MacroContext) {
 
   def runIO(quoted: Tree): Tree =
     q"${c.prefix}.Run(${c.prefix}.run($quoted))"
-
 }

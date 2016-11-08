@@ -7,66 +7,12 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 import io.getquill.context.Context
-import scala.annotation.tailrec
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext
 
 sealed trait Effect
 
 object Effect {
   sealed trait Read extends Effect
   sealed trait Write extends Effect
-}
-
-trait SyncIOMonad extends IOMonad {
-  this: Context[_, _] =>
-
-  type Result[T] = T
-
-  def unsafePerformIO[T](io: IO[T, _]): Result[T] = {
-    @tailrec def loop[U](io: IO[U, _]): Result[U] = {
-      def flatten[Y, M[X] <: TraversableOnce[X]](seq: Sequence[Y, M, Effect]) =
-        seq.in.foldLeft(IO.successful(seq.cbf())) {
-          (builder, item) =>
-            builder.flatMap(b => item.map(b += _))
-        }.map(_.result())
-      io match {
-        case Unit   => ()
-        case Run(f) => f()
-        case seq @ Sequence(_, _) =>
-          loop(flatten(seq))
-        case TransformWith(a, fA) =>
-          io match {
-            case Unit   => loop(fA(Success(())))
-            case Run(r) => loop(fA(Try(r())))
-            case seq @ Sequence(_, _) =>
-              loop(flatten(seq).transformWith(fA))
-            case TransformWith(b, fB) =>
-              loop(b.transformWith(fB(_).transformWith(fA)))
-          }
-      }
-    }
-    loop(io)
-  }
-}
-
-trait ScalaFutureIOMonad extends IOMonad {
-  this: Context[_, _] =>
-
-  type Result[T] = Future[T]
-
-  def unsafePerformIO[T](io: IO[T, _])(implicit ec: ExecutionContext): Result[T] =
-    io match {
-      case Unit   => Future.successful(())
-      case Run(f) => f()
-      case Sequence(in, cbf) =>
-        Future.sequence(in.map(unsafePerformIO))(cbf, ec)
-      case TransformWith(a, fA) =>
-        unsafePerformIO(a)
-          .map(Success(_))
-          .recover { case ex => Failure(ex) }
-          .flatMap(v => unsafePerformIO(fA(v)))
-    }
 }
 
 trait IOMonad {
@@ -82,22 +28,24 @@ trait IOMonad {
   def runIO(quoted: Quoted[BatchAction[Action[_]]]): IO[RunBatchActionResult, Effect.Write] = macro IOMonadMacro.runIO
   def runIO[T](quoted: Quoted[BatchAction[ActionReturning[_, T]]]): IO[RunBatchActionReturningResult[T], Effect.Write] = macro IOMonadMacro.runIO
 
-  protected case object Unit extends IO[Unit, Effect]
+  protected case class FromTry[T](t: Try[T]) extends IO[T, Effect]
   protected case class Run[T, E <: Effect](f: () => Result[T]) extends IO[T, E]
   protected case class Sequence[A, M[X] <: TraversableOnce[X], E <: Effect](in: M[IO[A, E]], cbf: CanBuildFrom[M[A], A, M[A]]) extends IO[M[A], E]
   protected case class TransformWith[T, S, E1 <: Effect, E2 <: Effect](io: IO[T, E1], f: Try[T] => IO[S, E2]) extends IO[S, E1 with E2]
 
   object IO {
 
-    def unit: IO[Unit, Effect] = Unit
+    def fromTry[T](result: Try[T]): IO[T, Effect] = FromTry(result)
 
     def sequence[A, M[X] <: TraversableOnce[X], E <: Effect](in: M[IO[A, E]])(implicit cbf: CanBuildFrom[M[A], A, M[A]]): IO[M[A], E] = Sequence(in, cbf)
 
     def transformWith[T, S, E1 <: Effect, E2 <: Effect](io: IO[T, E1])(f: Try[T] => IO[S, E2]): IO[S, E1 with E2] = TransformWith(io, f)
 
+    val unit: IO[Unit, Effect] = fromTry(Success(()))
+
     def transform[T, S, E <: Effect](io: IO[T, E])(f: Try[T] => Try[S]): IO[S, E] =
       transformWith(io) { r =>
-        successful(f(r)).lowerFromTry
+        fromTry(f(r))
       }
 
     def zip[T, E1 <: Effect, S, E2 <: Effect](a: IO[T, E1], b: IO[S, E2]): IO[(T, S), E1 with E2] =
@@ -106,16 +54,11 @@ trait IOMonad {
         case other         => throw new IllegalStateException("Sequence returned less than two elements")
       }
 
-    def failed[T](exception: Throwable): IO[T, Effect] = apply(throw exception)
+    def failed[T](exception: Throwable): IO[T, Effect] = fromTry(Failure(exception))
 
-    def successful[T](result: T): IO[T, Effect] = apply(result)
+    def successful[T](result: T): IO[T, Effect] = fromTry(Success(result))
 
-    def fromTry[T](result: Try[T]): IO[T, Effect] = unit.transform(_ => result)
-
-    def apply[T](body: => T): IO[T, Effect] = unit.map(_ => body)
-
-    def find[T, E <: Effect](ios: collection.immutable.Iterable[IO[T, E]])(p: T => Boolean): IO[Option[T], E] =
-      sequence(ios).map(_.find(p))
+    def apply[T](body: => T): IO[T, Effect] = fromTry(Try(body))
 
     def foldLeft[T, R, E <: Effect](ios: collection.immutable.Iterable[IO[T, E]])(zero: R)(op: (R, T) => R): IO[R, E] =
       sequence(ios).map(_.foldLeft(zero)(op))

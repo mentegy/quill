@@ -10,7 +10,7 @@ import com.twitter.finagle.mysql.Client
 import com.twitter.finagle.mysql.LongValue
 import com.twitter.finagle.mysql.OK
 import com.twitter.finagle.mysql.Parameter
-import com.twitter.finagle.mysql.{Result => MysqlResult}
+import com.twitter.finagle.mysql.{ Result => MysqlResult }
 import com.twitter.finagle.mysql.Row
 import com.twitter.finagle.mysql.Transactions
 import com.twitter.util.Await
@@ -28,12 +28,13 @@ import io.getquill.util.Messages.fail
 import io.getquill.monad.TwitterFutureIOMonad
 
 class FinagleMysqlContext[N <: NamingStrategy](
-  client: Client with Transactions,
-  private[getquill] val dateTimezone: TimeZone = TimeZone.getDefault)
-    extends SqlContext[MySQLDialect, N]
-    with FinagleMysqlDecoders
-    with FinagleMysqlEncoders
-    with TwitterFutureIOMonad {
+  client:                             Client with Transactions,
+  private[getquill] val dateTimezone: TimeZone                 = TimeZone.getDefault
+)
+  extends SqlContext[MySQLDialect, N]
+  with FinagleMysqlDecoders
+  with FinagleMysqlEncoders
+  with TwitterFutureIOMonad {
 
   def this(config: FinagleMysqlContextConfig) = this(config.client, config.dateTimezone)
   def this(config: Config) = this(FinagleMysqlContextConfig(config))
@@ -121,7 +122,7 @@ class FinagleMysqlContext[N <: NamingStrategy](
   private def toOk(result: MysqlResult) =
     result match {
       case ok: OK => ok
-      case error => fail(error.toString)
+      case error  => fail(error.toString)
     }
 
   def withClient[T](f: Client => T) =

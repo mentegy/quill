@@ -12,10 +12,10 @@ import scala.util.Try
 import io.getquill.monad.TwitterFutureIOMonad
 
 class FinaglePostgresContext[N <: NamingStrategy](client: Client)
-    extends SqlContext[FinaglePostgresDialect, N]
-    with FinaglePostgresEncoders
-    with FinaglePostgresDecoders
-    with TwitterFutureIOMonad {
+  extends SqlContext[FinaglePostgresDialect, N]
+  with FinaglePostgresEncoders
+  with FinaglePostgresDecoders
+  with TwitterFutureIOMonad {
 
   def this(config: FinaglePostgresContextConfig) = this(config.client)
   def this(config: Config) = this(FinaglePostgresContextConfig(config))

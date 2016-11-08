@@ -14,7 +14,7 @@ trait TwitterFutureIOMonad extends IOMonad {
 
   def unsafePerformIO[T](io: IO[T, _]): Result[T] =
     io match {
-      case Unit => Future.value(())
+      case Unit   => Future.value(())
       case Run(f) => f()
       case Sequence(in, cbf) =>
         Future.collect(in.map(unsafePerformIO).toSeq)
@@ -23,7 +23,7 @@ trait TwitterFutureIOMonad extends IOMonad {
         unsafePerformIO(a)
           .liftToTry.map {
             case Return(v) => Success(v)
-            case Throw(t) => Failure(t)
+            case Throw(t)  => Failure(t)
           }
           .flatMap(v => unsafePerformIO(fA(v)))
     }
