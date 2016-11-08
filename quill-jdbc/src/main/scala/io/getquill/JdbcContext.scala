@@ -20,11 +20,13 @@ import io.getquill.context.jdbc.JdbcDecoders
 import io.getquill.context.jdbc.JdbcEncoders
 
 import scala.reflect.runtime.universe._
+import io.getquill.monad.SyncIOMonad
 
 class JdbcContext[Dialect <: SqlIdiom, Naming <: NamingStrategy](dataSource: DataSource with Closeable)
   extends SqlContext[Dialect, Naming]
   with JdbcEncoders
-  with JdbcDecoders {
+  with JdbcDecoders
+  with SyncIOMonad {
 
   def this(config: JdbcContextConfig) = this(config.dataSource)
   def this(config: Config) = this(JdbcContextConfig(config))
@@ -36,6 +38,7 @@ class JdbcContext[Dialect <: SqlIdiom, Naming <: NamingStrategy](dataSource: Dat
   override type PrepareRow = PreparedStatement
   override type ResultRow = ResultSet
 
+  override type Result[T] = T
   override type RunQueryResult[T] = List[T]
   override type RunQuerySingleResult[T] = T
   override type RunActionResult = Long

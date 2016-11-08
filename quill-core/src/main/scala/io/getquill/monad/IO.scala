@@ -31,13 +31,13 @@ trait SyncIOMonad extends IOMonad {
             builder.flatMap(b => item.map(b += _))
         }.map(_.result())
       io match {
-        case Unit => ()
+        case Unit   => ()
         case Run(f) => f()
         case seq @ Sequence(_, _) =>
           loop(flatten(seq))
         case TransformWith(a, fA) =>
           io match {
-            case Unit => loop(fA(Success(())))
+            case Unit   => loop(fA(Success(())))
             case Run(r) => loop(fA(Try(r())))
             case seq @ Sequence(_, _) =>
               loop(flatten(seq).transformWith(fA))
@@ -57,7 +57,7 @@ trait ScalaFutureIOMonad extends IOMonad {
 
   def unsafePerformIO[T](io: IO[T, _])(implicit ec: ExecutionContext): Result[T] =
     io match {
-      case Unit => Future.successful(())
+      case Unit   => Future.successful(())
       case Run(f) => f()
       case Sequence(in, cbf) =>
         Future.sequence(in.map(unsafePerformIO))(cbf, ec)
@@ -103,7 +103,7 @@ trait IOMonad {
     def zip[T, E1 <: Effect, S, E2 <: Effect](a: IO[T, E1], b: IO[S, E2]): IO[(T, S), E1 with E2] =
       sequence(List(a, b)).map {
         case a :: b :: Nil => (a.asInstanceOf[T], b.asInstanceOf[S])
-        case other => throw new IllegalStateException("Sequence returned less than two elements")
+        case other         => throw new IllegalStateException("Sequence returned less than two elements")
       }
 
     def failed[T](exception: Throwable): IO[T, Effect] = apply(throw exception)

@@ -16,10 +16,10 @@ class MirrorContextWithQueryProbing[Idiom <: BaseIdiom, Naming <: NamingStrategy
   extends MirrorContext[Idiom, Naming] with QueryProbing
 
 class MirrorContext[Idiom <: BaseIdiom, Naming <: NamingStrategy]
-    extends Context[Idiom, Naming]
-    with MirrorEncoders
-    with MirrorDecoders
-    with SyncIOMonad {
+  extends Context[Idiom, Naming]
+  with MirrorEncoders
+  with MirrorDecoders
+  with SyncIOMonad {
 
   override type Result[T] = T
   override type RunQueryResult[T] = QueryMirror[T]
@@ -70,5 +70,6 @@ class MirrorContext[Idiom <: BaseIdiom, Naming <: NamingStrategy]
       groups.map {
         case BatchGroupReturning(string, column, prepare) =>
           (string, column, prepare.map(_(Row())))
-      }, extractor)
+      }, extractor
+    )
 }

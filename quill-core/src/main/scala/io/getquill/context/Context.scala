@@ -8,9 +8,9 @@ import scala.util.Try
 import io.getquill.NamingStrategy
 
 trait Context[Idiom <: io.getquill.idiom.Idiom, Naming <: NamingStrategy]
-    extends Closeable
-    with CoreDsl {
-  
+  extends Closeable
+  with CoreDsl {
+
   type Result[T]
   type RunQuerySingleResult[T]
   type RunQueryResult[T]
@@ -34,7 +34,7 @@ trait Context[Idiom <: io.getquill.idiom.Idiom, Naming <: NamingStrategy]
   protected def handleSingleResult[T](list: List[T]) =
     list match {
       case value :: Nil => value
-      case other => throw new IllegalStateException(s"Expected a single result but got $other")
+      case other        => throw new IllegalStateException(s"Expected a single result but got $other")
     }
 
 }

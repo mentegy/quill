@@ -10,7 +10,7 @@ import com.twitter.finagle.mysql.Client
 import com.twitter.finagle.mysql.LongValue
 import com.twitter.finagle.mysql.OK
 import com.twitter.finagle.mysql.Parameter
-import com.twitter.finagle.mysql.Result
+import com.twitter.finagle.mysql.{Result => MysqlResult}
 import com.twitter.finagle.mysql.Row
 import com.twitter.finagle.mysql.Transactions
 import com.twitter.util.Await
@@ -25,14 +25,15 @@ import io.getquill.context.finagle.mysql.SingleValueRow
 import io.getquill.context.sql.SqlContext
 import io.getquill.util.LoadConfig
 import io.getquill.util.Messages.fail
+import io.getquill.monad.TwitterFutureIOMonad
 
 class FinagleMysqlContext[N <: NamingStrategy](
-  client:                             Client with Transactions,
-  private[getquill] val dateTimezone: TimeZone                 = TimeZone.getDefault
-)
-  extends SqlContext[MySQLDialect, N]
-  with FinagleMysqlDecoders
-  with FinagleMysqlEncoders {
+  client: Client with Transactions,
+  private[getquill] val dateTimezone: TimeZone = TimeZone.getDefault)
+    extends SqlContext[MySQLDialect, N]
+    with FinagleMysqlDecoders
+    with FinagleMysqlEncoders
+    with TwitterFutureIOMonad {
 
   def this(config: FinagleMysqlContextConfig) = this(config.client, config.dateTimezone)
   def this(config: Config) = this(FinagleMysqlContextConfig(config))
@@ -44,12 +45,13 @@ class FinagleMysqlContext[N <: NamingStrategy](
   override type PrepareRow = List[Parameter]
   override type ResultRow = Row
 
-  override type RunQueryResult[T] = Future[List[T]]
-  override type RunQuerySingleResult[T] = Future[T]
-  override type RunActionResult = Future[Long]
-  override type RunActionReturningResult[T] = Future[T]
-  override type RunBatchActionResult = Future[List[Long]]
-  override type RunBatchActionReturningResult[T] = Future[List[T]]
+  override type Result[T] = Future[T]
+  override type RunQueryResult[T] = List[T]
+  override type RunQuerySingleResult[T] = T
+  override type RunActionResult = Long
+  override type RunActionReturningResult[T] = T
+  override type RunBatchActionResult = List[Long]
+  override type RunBatchActionReturningResult[T] = List[T]
 
   Await.result(client.ping)
 
@@ -113,13 +115,13 @@ class FinagleMysqlContext[N <: NamingStrategy](
       }
     }.map(_.flatten.toList)
 
-  private def extractReturningValue[T](result: Result, extractor: Row => T) =
+  private def extractReturningValue[T](result: MysqlResult, extractor: Row => T) =
     extractor(SingleValueRow(LongValue(toOk(result).insertId)))
 
-  private def toOk(result: Result) =
+  private def toOk(result: MysqlResult) =
     result match {
       case ok: OK => ok
-      case error  => fail(error.toString)
+      case error => fail(error.toString)
     }
 
   def withClient[T](f: Client => T) =
