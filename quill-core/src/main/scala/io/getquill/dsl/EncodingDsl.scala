@@ -13,9 +13,9 @@ trait LowPriorityImplicits {
 
   implicit def materializeDecoder[T <: AnyVal]: Decoder[T] = macro EncodingDslMacro.materializeDecoder[T]
 
-  implicit def traversableEncoder[T, Col <: Traversable[T]]: Encoder[Col] = macro EncodingDslMacro.traversableEncoder[T, Col]
+  implicit def traversableEncoder[I, O, Col <: Traversable[I]]: Encoder[Col] = macro EncodingDslMacro.traversableEncoder[I, O, Col]
 
-  implicit def traversableDecoder[T, Col <: Traversable[T]]: Decoder[Col] = macro EncodingDslMacro.traversableDecoder[T, Col]
+  implicit def traversableDecoder[I, O, Col <: Traversable[O]]: Decoder[Col] = macro EncodingDslMacro.traversableDecoder[I, O, Col]
 }
 
 trait EncodingDsl extends LowPriorityImplicits {
