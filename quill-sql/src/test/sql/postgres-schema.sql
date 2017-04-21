@@ -94,3 +94,17 @@ CREATE TABLE DateEncodingTestEntity (
     v1 DATE,
     v2 TIMESTAMP
 );
+
+CREATE TABLE ArraysTestEntity (
+    texts TEXT[],
+    bools BOOLEAN[],
+    bytes SMALLINT[],
+    shorts SMALLINT[],
+    ints INTEGER[],
+    longs BIGINT[],
+    floats FLOAT[],
+    doubles DOUBLE PRECISION[],
+    dates TIMESTAMP[],
+    timestamps TIMESTAMP[],
+    dates2 DATE[]
+);

@@ -15,6 +15,16 @@ class EncodingDslMacro(val c: MacroContext) {
     anyValDecoder(t.tpe)
       .getOrElse(fail("Decoder", t.tpe))
 
+
+  def traversableEncoder[T, Col <: Traversable[T]](implicit colTag: WeakTypeTag[Col], tTag: WeakTypeTag[T]): Tree = {
+
+    (OptionalTypecheck(q"implicitly[${c.prefix}.MappedEncoding[$t]]")
+      OptionalTypecheck(c)(q"implicitly[${c.prefix}.Encoder[$t]]"), checkOf(tTag)) match {
+      case (Some(colEncoder), Some(tEncoder)) =>
+      case _ => fail("Encoder", colTag.tpe)
+    }
+  }
+
   def lift[T](v: Tree)(implicit t: WeakTypeTag[T]): Tree =
     lift[T](v, "lift")
 
