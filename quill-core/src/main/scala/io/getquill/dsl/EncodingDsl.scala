@@ -67,27 +67,24 @@ trait EncodingDsl extends LowPriorityImplicits {
     (index, row) => mapped.f(decoder(index, row))
 }
 
-
 trait TraversableEncoding {
   this: EncodingDsl =>
 
-  implicit def traversableEncoder[I, O, Col[_] <: Traversable[_]](
-                                                                   implicit
-                                                                   mapped: MappedEncoding[I, O],
-                                                                   e:      Encoder[Col[O]],
-                                                                   bf:     CanBuildFrom[Nothing, O, Col[O]]
-                                                                 ): Encoder[Col[I]] = {
-    mappedEncoder[Col[I], Col[O]](MappedEncoding((col: Col[I]) =>
-      col.foldLeft(bf())((b, x) => b += mapped.f(x)).result()), e)
+  implicit def traversableMappedEncoder[I, O, Col[_] <: Traversable[I]](
+    implicit
+    mapped: MappedEncoding[I, O],
+    e:      Encoder[Traversable[O]]
+  ): Encoder[Col[I]] = {
+    mappedEncoder[Col[I], Traversable[O]](MappedEncoding((col: Col[I]) => col.map(mapped.f)), e)
   }
 
-  implicit def traversableDecoder[I, O, Col[_] <: Traversable[_]](
-                                                                   implicit
-                                                                   mapped: MappedEncoding[I, O],
-                                                                   d:      Decoder[Col[I]],
-                                                                   bf:     CanBuildFrom[Nothing, O, Col[O]]
-                                                                 ): Decoder[Col[O]] = {
-    mappedDecoder[Col[I], Col[O]](MappedEncoding((col: Col[I]) =>
+  implicit def traversableMappedDecoder[I, O, Col[_] <: Traversable[O]](
+    implicit
+    mapped: MappedEncoding[I, O],
+    d:      Decoder[Traversable[I]],
+    bf:     CanBuildFrom[Nothing, O, Col[O]]
+  ): Decoder[Col[O]] = {
+    mappedDecoder[Traversable[I], Col[O]](MappedEncoding((col: Traversable[I]) =>
       col.foldLeft(bf())((b, x) => b += mapped.f(x)).result()), d)
   }
 }
