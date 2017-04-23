@@ -3,6 +3,7 @@ package io.getquill.dsl
 import io.getquill.quotation.NonQuotedException
 
 import scala.annotation.compileTimeOnly
+import scala.collection.generic.CanBuildFrom
 import scala.language.experimental.macros
 import scala.language.higherKinds
 
@@ -12,10 +13,6 @@ trait LowPriorityImplicits {
   implicit def materializeEncoder[T <: AnyVal]: Encoder[T] = macro EncodingDslMacro.materializeEncoder[T]
 
   implicit def materializeDecoder[T <: AnyVal]: Decoder[T] = macro EncodingDslMacro.materializeDecoder[T]
-
-  implicit def traversableEncoder[I, O, Col <: Traversable[I]]: Encoder[Col] = macro EncodingDslMacro.traversableEncoder[I, O, Col]
-
-  implicit def traversableDecoder[I, O, Col <: Traversable[O]]: Decoder[Col] = macro EncodingDslMacro.traversableDecoder[I, O, Col]
 }
 
 trait EncodingDsl extends LowPriorityImplicits {
@@ -68,4 +65,29 @@ trait EncodingDsl extends LowPriorityImplicits {
 
   protected def mappedBaseDecoder[I, O](mapped: MappedEncoding[I, O], decoder: BaseDecoder[I]): BaseDecoder[O] =
     (index, row) => mapped.f(decoder(index, row))
+}
+
+
+trait TraversableEncoding {
+  this: EncodingDsl =>
+
+  implicit def traversableEncoder[I, O, Col[_] <: Traversable[_]](
+                                                                   implicit
+                                                                   mapped: MappedEncoding[I, O],
+                                                                   e:      Encoder[Col[O]],
+                                                                   bf:     CanBuildFrom[Nothing, O, Col[O]]
+                                                                 ): Encoder[Col[I]] = {
+    mappedEncoder[Col[I], Col[O]](MappedEncoding((col: Col[I]) =>
+      col.foldLeft(bf())((b, x) => b += mapped.f(x)).result()), e)
+  }
+
+  implicit def traversableDecoder[I, O, Col[_] <: Traversable[_]](
+                                                                   implicit
+                                                                   mapped: MappedEncoding[I, O],
+                                                                   d:      Decoder[Col[I]],
+                                                                   bf:     CanBuildFrom[Nothing, O, Col[O]]
+                                                                 ): Decoder[Col[O]] = {
+    mappedDecoder[Col[I], Col[O]](MappedEncoding((col: Col[I]) =>
+      col.foldLeft(bf())((b, x) => b += mapped.f(x)).result()), d)
+  }
 }

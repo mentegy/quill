@@ -15,41 +15,6 @@ class EncodingDslMacro(val c: MacroContext) {
     anyValDecoder(t.tpe)
       .getOrElse(fail("Decoder", t.tpe))
 
-  def traversableEncoder[I, O, Col <: Traversable[I]](implicit iTag: WeakTypeTag[I], oTag: WeakTypeTag[O],
-                                                      cTag: WeakTypeTag[Col]): Tree = {
-    OptionalTypecheck(c)(q"implicitly[${c.prefix}.MappedEncoding[$oTag, $iTag]]") match {
-      case Some(mapped) =>
-        OptionalTypecheck(c)(q"implicitly[${c.prefix}.Encoder[Traversable[$oTag]]]") match {
-          case None => fail("Encoder", cTag.tpe)
-          case Some(e) =>
-            q"""
-              ${c.prefix}.mappedEncoder[$cTag, Traversable[$iTag]](
-                io.getquill.MappedEncoding((col: $cTag) => col.map($mapped.f)), $e
-              )
-            """
-        }
-      case None => fail("Encoder", cTag.tpe)
-    }
-  }
-
-  def traversableDecoder[I, O, Col <: Traversable[O]](implicit iTag: WeakTypeTag[I], oTag: WeakTypeTag[O],
-                                                      cTag: WeakTypeTag[Col]): Tree = {
-    OptionalTypecheck(c)(q"implicitly[${c.prefix}.MappedEncoding[$iTag, $oTag]]") match {
-      case Some(mapped) =>
-        OptionalTypecheck(c)(q"implicitly[${c.prefix}.Decoder[Traversable[$iTag]]]") match {
-          case None => fail("Decoder", cTag.tpe)
-          case Some(e) =>
-            q"""
-              val bf = scala.collection.generic.CanBuildFrom[Nothing, $oTag, $cTag]
-              ${c.prefix}.mappedDecoder[Traversable[$iTag], $cTag](io.getquill.MappedEncoding(
-                (t: Traversable[$iTag]) => t.foldLeft(bf())((b, x) => b += $mapped.f(x)).result()), $e
-              )
-            """
-        }
-      case None => fail("Decoder", cTag.tpe)
-    }
-  }
-
   def lift[T](v: Tree)(implicit t: WeakTypeTag[T]): Tree =
     lift[T](v, "lift")
 
