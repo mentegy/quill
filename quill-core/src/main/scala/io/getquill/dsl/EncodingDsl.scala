@@ -73,7 +73,8 @@ trait TraversableEncoding {
   implicit def traversableMappedEncoder[I, O, Col[_] <: Traversable[I]](
     implicit
     mapped: MappedEncoding[I, O],
-    e:      Encoder[Traversable[O]]
+    e:      Encoder[Traversable[O]],
+    bf:     CanBuildFrom[Nothing, I, Col[I]]
   ): Encoder[Col[I]] = {
     mappedEncoder[Col[I], Traversable[O]](MappedEncoding((col: Col[I]) => col.map(mapped.f)), e)
   }

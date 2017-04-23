@@ -1,32 +1,31 @@
 package io.getquill.context.jdbc
 
 import java.sql.{ JDBCType, Types }
-
 import io.getquill.dsl.TraversableEncoding
-
 import scala.collection.generic.CanBuildFrom
 
 trait ArrayJdbcEncoding extends TraversableEncoding {
   self: JdbcContext[_, _] =>
 
   implicit def arrayStringEncoder[Col <: Traversable[String]]: Encoder[Col] = rawEncoder[String, Col](Types.VARCHAR)
-  implicit def arrayStringDecoder[Col <: Traversable[String]](implicit bf: CanBuildFrom[Nothing, String, Col]): Decoder[Col] = rawDecode[String, Col](Types.VARCHAR)
+  implicit def arrayStringDecoder[Col <: Traversable[String]](implicit bf: CanBuildFrom[Nothing, String, Col]): Decoder[Col] = rawDecoder[String, Col](Types.VARCHAR)
 
   private def rawEncoder[T, Col <: Traversable[T]](jdbcType: Int): Encoder[Col] =
     arrayEncoder[T, Col](jdbcType, _.asInstanceOf[AnyRef])
 
-  private def rawDecode[T, Col <: Traversable[T]](jdbcType: Int)(implicit bf: CanBuildFrom[Nothing, T, Col]): Decoder[Col] =
+  private def rawDecoder[T, Col <: Traversable[T]](jdbcType: Int)(implicit bf: CanBuildFrom[Nothing, T, Col]): Decoder[Col] =
     arrayDecoder[T, T, Col](jdbcType, identity)
 
   protected def parseJdbcType(intType: Int): String = JDBCType.valueOf(intType).getName
 
   def arrayEncoder[T, Col <: Traversable[T]](jdbcType: Int, mapper: T => AnyRef): Encoder[Col] = {
     encoder[Col](Types.ARRAY, (idx: Index, seq: Col, row: PrepareRow) => {
+      val bf = implicitly[CanBuildFrom[Nothing, AnyRef, Array[AnyRef]]]
       row.setArray(
         idx,
         withConnection(_.createArrayOf(
           parseJdbcType(jdbcType),
-          seq.map(x => mapper(x)).toArray
+          seq.foldLeft(bf())((b, x) => b += mapper(x)).result()
         ))
       )
     })
