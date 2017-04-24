@@ -6,7 +6,7 @@ import java.util.Date
 
 import io.getquill.Spec
 import io.getquill.context.sql.SqlContext
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{Assertion, BeforeAndAfterEach}
 
 import scala.collection.mutable.ListBuffer
 
@@ -34,6 +34,22 @@ trait ArrayEncodingSpec extends Spec with BeforeAndAfterEach {
     Iterable(3), IndexedSeq(2), Set(1, 2, 3), Seq(1f, 2f), Seq(4d, 3d),
     Seq(new Timestamp(System.currentTimeMillis())), Seq(new Timestamp(System.currentTimeMillis())),
     Seq(LocalDate.now()))
+
+  // casting types can be dangerous so we need to ensure that everything is ok
+  def baseEntityDeepCheck(e1: ArraysTestEntity, e2: ArraysTestEntity): Assertion = {
+    e1.texts.head mustBe e2.texts.head
+    e1.decimals.head mustBe e2.decimals.head
+    e1.bools.head mustBe e2.bools.head
+    e1.bytes.head mustBe e2.bytes.head
+    e1.shorts.head mustBe e2.shorts.head
+    e1.ints.head mustBe e2.ints.head
+    e1.longs.head mustBe e2.longs.head
+    e1.floats.head mustBe e2.floats.head
+    e1.doubles.head mustBe e2.doubles.head
+    e1.dates1.head mustBe e2.dates1.head
+    e1.timestamps.head mustBe e2.timestamps.head
+    e1.dates2.head mustBe e2.dates2.head
+  }
 
   // Support Traversable encoding basing on MappedEncoding
   case class StrWrap(str: String)

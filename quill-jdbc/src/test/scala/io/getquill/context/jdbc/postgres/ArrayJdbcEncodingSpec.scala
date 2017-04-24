@@ -11,7 +11,9 @@ class ArrayJdbcEncodingSpec extends ArrayEncodingSpec {
 
   "Support all sql base types and `Traversable` implementers" in {
     ctx.run(q.insert(lift(e)))
-    ctx.run(q).head mustEqual e
+    val actual = ctx.run(q).head
+    actual mustEqual e
+    baseEntityDeepCheck(actual, e)
   }
 
   implicit val strWrapEncode: MappedEncoding[StrWrap, String] = MappedEncoding(_.str)
