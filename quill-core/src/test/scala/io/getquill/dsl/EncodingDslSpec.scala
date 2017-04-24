@@ -114,7 +114,7 @@ class EncodingDslSpec extends Spec {
   "provide mapped encoding for traversables collections" - {
     case class Wrap(intStr: String)
 
-    implicit def encoderTravInt[T <: Traversable[Int]: ClassTag]: Encoder[T] = encoder[T]
+    implicit def encoderTravInt[T <: Traversable[Int]]: Encoder[T] = encoder[T]
     implicit def decoderTravInt[T <: Traversable[Int]: ClassTag]: Decoder[T] = decoder[T]
 
     implicit val encoderWrap = MappedEncoding[Wrap, Int](_.intStr.toInt)
@@ -128,6 +128,15 @@ class EncodingDslSpec extends Spec {
     "decoder" in {
       val dec = implicitly[Decoder[List[Wrap]]]
       dec(0, Row(List(123))) mustEqual List(Wrap("123"))
+    }
+
+    case class Wrap2(str: String)
+    implicit val encoderWrap2 = MappedEncoding[Wrap2, String](_.str)
+    implicit val decoderWrap2 = MappedEncoding[String, Wrap2](Wrap2.apply)
+
+    "mapped trav encoding should not compile without base trav encoders/decoders" in {
+      "implicitly[Encoder[Seq[Wrap2]]]" mustNot compile
+      "implicitly[Decoder[Seq[Wrap2]]]" mustNot compile
     }
   }
 }
