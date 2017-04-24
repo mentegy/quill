@@ -1,6 +1,7 @@
 package io.getquill
 
 import java.io.Closeable
+import java.sql.Types
 import javax.sql.DataSource
 
 import com.typesafe.config.Config
@@ -16,4 +17,9 @@ class PostgresJdbcContext[N <: NamingStrategy](dataSource: DataSource with Close
   def this(config: Config) = this(JdbcContextConfig(config))
   def this(configPrefix: String) = this(LoadConfig(configPrefix))
 
+  override def parseJdbcType(intType: Int): String = intType match {
+    case Types.TINYINT => super.parseJdbcType(Types.SMALLINT)
+    case Types.DOUBLE  => "float8"
+    case _             => super.parseJdbcType(intType)
+  }
 }

@@ -1,7 +1,7 @@
 package io.getquill.context.sql.dsl
 
 import java.time.LocalDate
-import java.util.{Date, UUID}
+import java.util.Date
 
 import io.getquill.context.sql.SqlContext
 import io.getquill.dsl.TraversableEncoding
@@ -22,10 +22,8 @@ trait ArrayEncoding extends TraversableEncoding {
   implicit def arrayLongEncoder[Col <: Traversable[Long]]: Encoder[Col]
   implicit def arrayFloatEncoder[Col <: Traversable[Float]]: Encoder[Col]
   implicit def arrayDoubleEncoder[Col <: Traversable[Double]]: Encoder[Col]
-  implicit def arrayArrayEncoder[Col <: Traversable[Array[Byte]]]: Encoder[Col]
   implicit def arrayDateEncoder[Col <: Traversable[Date]]: Encoder[Col]
   implicit def arrayLocalDateEncoder[Col <: Traversable[LocalDate]]: Encoder[Col]
-  //implicit def arrayUUIDEncoder[Col <: Traversable[UUID]]: Encoder[Col]
 
   implicit def arrayStringDecoder[Col <: Traversable[String]](implicit bf: CBF[String, Col]): Decoder[Col]
   implicit def arrayBigDecimalDecoder[Col <: Traversable[BigDecimal]](implicit bf: CBF[BigDecimal, Col]): Decoder[Col]
@@ -36,8 +34,6 @@ trait ArrayEncoding extends TraversableEncoding {
   implicit def arrayLongDecoder[Col <: Traversable[Long]](implicit bf: CBF[Long, Col]): Decoder[Col]
   implicit def arrayFloatDecoder[Col <: Traversable[Float]](implicit bf: CBF[Float, Col]): Decoder[Col]
   implicit def arrayDoubleDecoder[Col <: Traversable[Double]](implicit bf: CBF[Double, Col]): Decoder[Col]
-  implicit def arrayArrayDecoder[Col <: Traversable[Array[Byte]]](implicit bf: CBF[Array[Byte], Col]): Decoder[Col]
   implicit def arrayDateDecoder[Col <: Traversable[Date]](implicit bf: CBF[Date, Col]): Decoder[Col]
   implicit def arrayLocalDateDecoder[Col <: Traversable[LocalDate]](implicit bf: CBF[LocalDate, Col]): Decoder[Col]
-  //implicit def arrayUUIDDecoder[Col <: Traversable[UUID]](implicit bf: CBF[UUID, Col]): Decoder[Col]
 }
