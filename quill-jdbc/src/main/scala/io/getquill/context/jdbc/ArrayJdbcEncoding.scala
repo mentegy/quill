@@ -8,6 +8,12 @@ import io.getquill.context.sql.dsl.ArrayEncoding
 
 import scala.collection.generic.CanBuildFrom
 
+/**
+  * Base trait for encoding JDBC arrays.
+  * Mix this trait into instances of `JdbcContext` in order to provide array support.
+  * Note that not all JDBC drivers/databases support arrays.
+  * We say `array` only in scope of JDBC. In Quill we represent them as instances of Traversable
+  */
 trait ArrayJdbcEncoding extends ArrayEncoding {
   self: JdbcContext[_, _] =>
 
@@ -37,15 +43,27 @@ trait ArrayJdbcEncoding extends ArrayEncoding {
   implicit def arrayDateDecoder[Col <: Traversable[Date]](implicit bf: CBF[Date, Col]): Decoder[Col] = rawDecoder[Date, Col](Types.TIMESTAMP)
   implicit def arrayLocalDateDecoder[Col <: Traversable[LocalDate]](implicit bf: CBF[LocalDate, Col]): Decoder[Col] = rawDecoder[LocalDate, Col](Types.DATE)
 
+  /**
+    * Parses instances of java.sql.Types to string form so it can be used in creation of sql arrays.
+    * Some databases does not support each of generic types, as with Postgres and `TINYINT`.
+    * Hence it's welcome to override this method and provide alternatives to non-existent types.
+    *
+    * @param intType one of java.sql.Types
+    * @return JDBC type in string form
+    */
+  def parseJdbcType(intType: Int): String = JDBCType.valueOf(intType).getName
 
-  private def rawEncoder[T, Col <: Traversable[T]](jdbcType: Int): Encoder[Col] =
-    arrayEncoder[T, Col](jdbcType, _.asInstanceOf[AnyRef])
-
-  private def rawDecoder[T, Col <: Traversable[T]](jdbcType: Int)(implicit bf: CanBuildFrom[Nothing, T, Col]): Decoder[Col] =
-    arrayDecoder[T, T, Col](jdbcType, identity)
-
-  protected def parseJdbcType(intType: Int): String = JDBCType.valueOf(intType).getName
-
+  /**
+    * Generic encoder for JDBC arrays.
+    *
+    * @param jdbcType one of java.sql.Types, used to create JDBC array base
+    * @param mapper jdbc array accepts AnyRef objects hence a mapper is needed.
+    *               If input type of an element of collection is not comfortable with jdbcType
+    *               then use this mapper to transform to appropriate type before casting to AnyRef
+    * @tparam T type of an element of collection to encode
+    * @tparam Col type of collection to encode
+    * @return JDBC array encoder
+    */
   def arrayEncoder[T, Col <: Traversable[T]](jdbcType: Int, mapper: T => AnyRef): Encoder[Col] = {
     encoder[Col](Types.ARRAY, (idx: Index, seq: Col, row: PrepareRow) => {
       val bf = implicitly[CanBuildFrom[Nothing, AnyRef, Array[AnyRef]]]
@@ -59,6 +77,17 @@ trait ArrayJdbcEncoding extends ArrayEncoding {
     })
   }
 
+  /**
+    * Generic encoder for JDBC arrays.
+    *
+    * @param jdbcType one of java.sql.Types, used to verify types compatibility
+    * @param mapper retrieved raw types fro JDBC array may be mapped via this mapper to satisfy encoder type
+    * @param bf builder factory is needed to create instances of decoder's collection
+    * @tparam I raw type retrieved form JDBC array
+    * @tparam O mapped type fulfilled in decoder's collection
+    * @tparam Col type of decoder's collection
+    * @return JDBC array decoder
+    */
   def arrayDecoder[I, O, Col <: Traversable[O]](jdbcType: Int, mapper: I => O)(implicit bf: CanBuildFrom[Nothing, O, Col]): Decoder[Col] = {
     decoder[Col](Types.ARRAY, (idx: Index, row: ResultRow) => {
       val arr = row.getArray(idx)
@@ -75,4 +104,10 @@ trait ArrayJdbcEncoding extends ArrayEncoding {
       }
     })
   }
+
+  private def rawEncoder[T, Col <: Traversable[T]](jdbcType: Int): Encoder[Col] =
+    arrayEncoder[T, Col](jdbcType, _.asInstanceOf[AnyRef])
+
+  private def rawDecoder[T, Col <: Traversable[T]](jdbcType: Int)(implicit bf: CanBuildFrom[Nothing, T, Col]): Decoder[Col] =
+    arrayDecoder[T, T, Col](jdbcType, identity)
 }
