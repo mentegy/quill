@@ -53,3 +53,9 @@ object AggregationOperator {
   case object `sum` extends AggregationOperator
   case object `size` extends AggregationOperator
 }
+
+sealed trait GenericOperator extends Operator
+
+object GenericOperator {
+  case object `headOption` extends GenericOperator
+}

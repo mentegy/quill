@@ -106,6 +106,9 @@ class MirrorIdiom extends Idiom {
 
     case Nested(a) =>
       stmt"${a.token}.nested"
+
+    case HeadOption(a) =>
+      stmt"${a.token}.headOption"
   }
 
   implicit val orderingTokenizer: Tokenizer[Ordering] = Tokenizer[Ordering] {

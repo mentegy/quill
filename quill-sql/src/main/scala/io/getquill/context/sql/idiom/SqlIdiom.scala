@@ -3,20 +3,7 @@ package io.getquill.context.sql.idiom
 import io.getquill.idiom.StatementInterpolator._
 import io.getquill.context.sql.norm._
 import io.getquill.ast._
-import io.getquill.context.sql.FlattenSqlQuery
-import io.getquill.context.sql.FromContext
-import io.getquill.context.sql.InfixContext
-import io.getquill.context.sql.JoinContext
-import io.getquill.context.sql.OrderByCriteria
-import io.getquill.context.sql.QueryContext
-import io.getquill.context.sql.SelectValue
-import io.getquill.context.sql.SetOperation
-import io.getquill.context.sql.SetOperationSqlQuery
-import io.getquill.context.sql.SqlQuery
-import io.getquill.context.sql.TableContext
-import io.getquill.context.sql.UnaryOperationSqlQuery
-import io.getquill.context.sql.UnionAllOperation
-import io.getquill.context.sql.UnionOperation
+import io.getquill.context.sql._
 import io.getquill.NamingStrategy
 import io.getquill.util.Messages.fail
 import io.getquill.idiom.Idiom
@@ -25,7 +12,6 @@ import io.getquill.idiom.Statement
 import io.getquill.context.sql.norm.SqlNormalize
 import io.getquill.util.Interleave
 import io.getquill.ast.Lift
-import io.getquill.context.sql.FlatJoinContext
 
 trait SqlIdiom extends Idiom {
 
@@ -134,6 +120,8 @@ trait SqlIdiom extends Idiom {
       stmt"(${a.token}) ${op.token} (${b.token})"
     case UnaryOperationSqlQuery(op, q) =>
       stmt"SELECT ${op.token} (${q.token})"
+
+    case HeadOptionSqlQuery(q) => q.token
   }
 
   implicit def selectValueTokenizer(implicit strategy: NamingStrategy): Tokenizer[SelectValue] = {

@@ -75,7 +75,7 @@ case class BetaReduction(map: collection.Map[Ast, Ast])
         Join(t, apply(a), apply(b), iA, iB, BetaReduction(map - iA - iB)(on))
       case FlatJoin(t, a, iA, on) =>
         FlatJoin(t, apply(a), iA, BetaReduction(map - iA)(on))
-      case _: Take | _: Entity | _: Drop | _: Union | _: UnionAll | _: Aggregation | _: Distinct | _: Nested =>
+      case _: Take | _: Entity | _: Drop | _: Union | _: UnionAll | _: Aggregation | _: Distinct | _: Nested | _: HeadOption =>
         super.apply(query)
     }
 }

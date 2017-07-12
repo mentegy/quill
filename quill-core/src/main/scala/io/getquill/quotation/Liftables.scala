@@ -94,6 +94,7 @@ trait Liftables {
     case FlatJoin(a, b, c, d)   => q"$pack.FlatJoin($a, $b, $c, $d)"
     case Distinct(a)            => q"$pack.Distinct($a)"
     case Nested(a)              => q"$pack.Nested($a)"
+    case HeadOption(a)          => q"$pack.HeadOption($a)"
   }
 
   implicit val propertyAliasLiftable: Liftable[PropertyAlias] = Liftable[PropertyAlias] {

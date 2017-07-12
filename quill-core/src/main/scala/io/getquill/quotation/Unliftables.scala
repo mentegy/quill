@@ -92,8 +92,9 @@ trait Unliftables {
       Join(t, a, b, iA, iB, on)
     case q"$pack.FlatJoin.apply(${ t: JoinType }, ${ a: Ast }, ${ iA: Ident }, ${ on: Ast })" =>
       FlatJoin(t, a, iA, on)
-    case q"$pack.Distinct.apply(${ a: Ast })" => Distinct(a)
-    case q"$pack.Nested.apply(${ a: Ast })"   => Nested(a)
+    case q"$pack.Distinct.apply(${ a: Ast })"   => Distinct(a)
+    case q"$pack.Nested.apply(${ a: Ast })"     => Nested(a)
+    case q"$pack.HeadOption.apply(${ a: Ast })" => HeadOption(a)
   }
 
   implicit val orderingUnliftable: Unliftable[Ordering] = Unliftable[Ordering] {

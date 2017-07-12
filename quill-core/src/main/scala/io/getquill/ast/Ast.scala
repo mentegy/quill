@@ -59,6 +59,8 @@ case class Distinct(a: Ast) extends Query
 
 case class Nested(a: Ast) extends Query
 
+case class HeadOption(a: Ast) extends Query
+
 //************************************************************
 
 case class Infix(parts: List[String], params: List[Ast]) extends Ast

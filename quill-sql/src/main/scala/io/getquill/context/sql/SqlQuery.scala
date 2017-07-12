@@ -31,6 +31,8 @@ case class UnaryOperationSqlQuery(
   q:  SqlQuery
 ) extends SqlQuery
 
+case class HeadOptionSqlQuery(q: SqlQuery) extends SqlQuery
+
 case class SelectValue(ast: Ast, alias: Option[String] = None)
 
 case class FlattenSqlQuery(
@@ -60,6 +62,7 @@ object SqlQuery {
       case Union(a, b)                          => SetOperationSqlQuery(apply(a), UnionOperation, apply(b))
       case UnionAll(a, b)                       => SetOperationSqlQuery(apply(a), UnionAllOperation, apply(b))
       case UnaryOperation(op, q: Query)         => UnaryOperationSqlQuery(op, apply(q))
+      case HeadOption(q: Query)                 => HeadOptionSqlQuery(apply(q))
       case _: Operation | _: Value              => FlattenSqlQuery(select = List(SelectValue(query)))
       case map @ Map(_: Nested, a, b) if a == b => flatten(map, a.name)
       case Map(q, a, b) if a == b               => apply(q)

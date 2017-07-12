@@ -12,6 +12,15 @@ class ProductJdbcSpec extends ProductSpec {
     ()
   }
 
+  "hey ho" in {
+    val e1 = Product(111, "111", 1)
+    val e2 = Product(222, "222", 2)
+    val e3 = Product(333, "333", 3)
+    testContext.run(liftQuery(List(e1, e2, e3)).foreach(p => productInsert(p)))
+    val product = testContext.run(productById(lift(111)).headOption)
+    println(product)
+  }
+
   "Product" - {
     "Insert multiple products" in {
       val inserted = testContext.run(liftQuery(productEntries).foreach(p => productInsert(p)))

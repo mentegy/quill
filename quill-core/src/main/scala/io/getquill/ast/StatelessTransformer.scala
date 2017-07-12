@@ -48,8 +48,9 @@ trait StatelessTransformer {
         Join(t, apply(a), apply(b), iA, iB, apply(on))
       case FlatJoin(t, a, iA, on) =>
         FlatJoin(t, apply(a), iA, apply(on))
-      case Distinct(a) => Distinct(apply(a))
-      case Nested(a)   => Nested(apply(a))
+      case Distinct(a)   => Distinct(apply(a))
+      case Nested(a)     => Nested(apply(a))
+      case HeadOption(a) => HeadOption(apply(a))
     }
 
   def apply(e: Assignment): Assignment =

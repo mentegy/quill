@@ -19,6 +19,7 @@ object NormalizeNestedStructures {
       case UnionAll(a, b)     => apply(a, b)(UnionAll)
       case Distinct(a)        => apply(a)(Distinct)
       case Nested(a)          => apply(a)(Nested)
+      case HeadOption(a)      => apply(a)(HeadOption)
       case FlatJoin(t, a, iA, on) =>
         (Normalize(a), Normalize(on)) match {
           case (`a`, `on`) => None

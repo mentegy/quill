@@ -53,6 +53,8 @@ private[dsl] trait QueryDsl {
 
     def nested: Query[T]
 
+    def headOption: Option[T]
+
     /**
      *
      * @param unquote is used for conversion of [[Quoted[A]]] to [[A]] with [[unquote]]

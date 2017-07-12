@@ -128,6 +128,9 @@ trait StatefulTransformer[T] {
       case Nested(a) =>
         val (at, att) = apply(a)
         (Nested(at), att)
+      case HeadOption(a) =>
+        val (at, att) = apply(a)
+        (HeadOption(at), att)
     }
 
   def apply(e: Assignment): (Assignment, StatefulTransformer[T]) =
