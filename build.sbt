@@ -80,6 +80,12 @@ lazy val `quill-jdbc` =
     )
     .dependsOn(`quill-sql-jvm` % "compile->compile;test->test")
 
+lazy val `quill-test` =
+  (project in file("quill-test"))
+    .settings(commonSettings: _*)
+    .dependsOn(`quill-jdbc` % "compile->compile;test->test")
+    .dependsOn(`quill-cassandra` % "compile->compile;test->test")
+
 lazy val `quill-spark` =
   (project in file("quill-spark"))
     .settings(commonSettings: _*)

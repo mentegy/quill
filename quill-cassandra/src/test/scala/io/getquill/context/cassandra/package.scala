@@ -18,5 +18,7 @@ package object cassandra {
 
   lazy val testStreamDB = new CassandraStreamContext(Literal, "testStreamDB") with CassandraTestEntities
 
+  lazy val cassandraProbing = new CassandraSyncContext(Literal, "testSyncDB") with QueryProbing
+
   def await[T](f: Future[T]): T = Await.result(f, Duration.Inf)
 }

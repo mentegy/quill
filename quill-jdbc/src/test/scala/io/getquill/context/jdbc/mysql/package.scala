@@ -8,3 +8,5 @@ package object mysql {
   object testContext extends MysqlJdbcContext(Literal, "testMysqlDB") with TestEntities with TestEncoders with TestDecoders
 
 }
+
+object MysqlJdbcQueryProbing extends MysqlJdbcContext(Literal, "testMysqlDB") with QueryProbing
