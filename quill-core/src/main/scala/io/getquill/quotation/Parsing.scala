@@ -41,6 +41,7 @@ trait Parsing {
     case `quotedAstParser`(value)            => value
     case `functionParser`(value)             => value
     case `actionParser`(value)               => value
+    case `conflictParser`(value)             => value
     case `infixParser`(value)                => value
     case `orderingParser`(value)             => value
     case `operationParser`(value)            => value
@@ -317,10 +318,13 @@ trait Parsing {
       ListContains(astParser(col), astParser(body))
   }
 
-  val propertyParser: Parser[Ast] = Parser[Ast] {
+  val propertyParser: Parser[Property] = Parser[Property] {
     case q"$e.get" if is[Option[Any]](e) =>
       c.fail("Option.get is not supported since it's an unsafe operation. Use `forall` or `exists` instead.")
-    case q"$e.$property" => Property(astParser(e), property.decodedName.toString)
+    case q"$e.$property" =>
+      println(s"PROPERTY $e and $property")
+      val r = astParser(e)
+      Property(r, property.decodedName.toString)
   }
 
   val operationParser: Parser[Operation] = Parser[Operation] {
@@ -532,11 +536,56 @@ trait Parsing {
 
   private val assignmentParser: Parser[Assignment] = Parser[Assignment] {
     case q"((${ identParser(i1) }) => $pack.Predef.ArrowAssoc[$t]($prop).$arrow[$v]($value))" =>
+      val astValue = excludedParser(t.tpe).unapply(value).getOrElse(astParser(value))
       checkTypes(prop, value)
-      Assignment(i1, astParser(prop), astParser(value))
+      val proper = astParser(prop)
+      println(s"Parsing assignment $i1, $prop, $proper, $astValue")
+      Assignment(i1, proper, astValue)
 
     // Unused, it's here only to make eclipse's presentation compiler happy
     case astParser(ast) => Assignment(Ident("unused"), Ident("unused"), Constant("unused"))
+  }
+
+  private def excludedParser(tpe: Type): Parser[Excluded] = Parser[Excluded] {
+    case q"$pack.excluded[$t].$prop" =>
+      val ast = astParser(pack)
+      println(s"excludedParser $t and $tpe and $prop and $ast")
+      val parsed = Property(Ident("excluded"), prop.decodedName.toString)
+      Excluded(parsed)
+  }
+
+  val conflictParser: Parser[Ast] = Parser[Ast] {
+    case q"$query.onConflictDoNothing" =>
+      Conflict(astParser(query), NoTarget, DoNothingOnConflict)
+    case q"$query.onConflictDoNothing(${ constraint: String })" =>
+      Conflict(astParser(query), ConstraintTarget(constraint), DoNothingOnConflict)
+    case q"$query.onConflictDoNothing(..$targets)" =>
+      Conflict(astParser(query), ColumnsTarget(targets.map(conflictTargetsParser(_))), DoNothingOnConflict)
+
+    case q"$query.onConflictDoUpdate(${ constraint: String })(..$assignments)" =>
+      Conflict(astParser(query), ConstraintTarget(constraint), parseConflictDoUpdate(assignments))
+    case q"$query.onConflictDoUpdate(..$targets)(..$assignments)" =>
+      Conflict(astParser(query), ColumnsTarget(targets.map(conflictTargetsParser(_))), parseConflictDoUpdate(assignments))
+  }
+
+  private val conflictTargetsParser = Parser[Property] {
+    case q"($e) => $prop" => propertyParser(prop)
+  }
+
+  private def parseConflictDoUpdate(todo: List[Tree], assigns: List[Assignment] = Nil, excls: List[Assignment] = Nil): DoUpdateOnConflict = {
+    if (todo.isEmpty) DoUpdateOnConflict(assigns, excls)
+    else todo.head match {
+      /*case q"((${ identParser(i1) }) => $pack1.Predef.ArrowAssoc[$t1]($prop1).$arrow[$v]($pack2.excluded[$t2].$prop2))" =>
+        println(s"$i1, $t1, $prop1, $v, $t2, $prop2")
+        val prp1 = astParser(prop1)
+        val prp2 = astParser(c.typecheck(q"$prop2"))
+
+        parseConflictDoUpdate(todo.tail, assigns, Assignment(i1, prp1, prp2) :: excls)*/
+      case assignmentParser(asg) =>
+        parseConflictDoUpdate(todo.tail, asg :: assigns, excls)
+      case tree =>
+        c.abort(tree.pos, "Could not parse conflict do update assignment")
+    }
   }
 
   private def checkTypes(lhs: Tree, rhs: Tree): Unit = {

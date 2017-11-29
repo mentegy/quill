@@ -11,6 +11,7 @@ trait StatelessTransformer {
       case e: Assignment           => apply(e)
       case Function(params, body)  => Function(params, apply(body))
       case e: Ident                => e
+      case e: Excluded             => e
       case Property(a, name)       => Property(apply(a), name)
       case Infix(a, b)             => Infix(a, b.map(apply))
       case e: OptionOperation      => apply(e)
@@ -94,6 +95,13 @@ trait StatelessTransformer {
       case Delete(query)                     => Delete(apply(query))
       case Returning(query, alias, property) => Returning(apply(query), alias, apply(property))
       case Foreach(query, alias, body)       => Foreach(apply(query), alias, apply(body))
+      case Conflict(query, target, action)   => Conflict(apply(query), target, apply(action))
+    }
+
+  def apply(e: ConflictAction): ConflictAction =
+    e match {
+      case DoUpdateOnConflict(assigns, excls) => DoUpdateOnConflict(assigns.map(apply), excls.map(apply))
+      case _                                  => e
     }
 
 }

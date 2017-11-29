@@ -40,6 +40,7 @@ class MirrorIdiom extends Idiom {
     case ast: QuotedReference      => ast.ast.token
     case ast: Lift                 => ast.token
     case ast: Assignment           => ast.token
+    case e: Excluded               => stmt"excluded.${e.property.token}"
   }
 
   implicit def ifTokenizer(implicit liftTokenizer: Tokenizer[Lift]): Tokenizer[If] = Tokenizer[If] {
@@ -184,6 +185,21 @@ class MirrorIdiom extends Idiom {
     case Delete(query)                 => stmt"${query.token}.delete"
     case Returning(query, alias, body) => stmt"${query.token}.returning((${alias.token}) => ${body.token})"
     case Foreach(query, alias, body)   => stmt"${query.token}.foreach((${alias.token}) => ${body.token})"
+    case c: Conflict                   => c.token
+  }
+
+  implicit def conflictTokenizer(implicit liftTokenizer: Tokenizer[Lift]): Tokenizer[Conflict] = Tokenizer[Conflict] {
+    case Conflict(query, NoTarget, DoNothingOnConflict)              => stmt"${query.token}.onConflictDoNothing"
+    case Conflict(query, ConstraintTarget(n), DoNothingOnConflict)   => stmt"${query.token}.onConflictDoNothing(${n.token})"
+    case Conflict(query, ColumnsTarget(c), DoNothingOnConflict)      => stmt"${query.token}.onConflictDoNothing(${c.token})"
+    case Conflict(query, ConstraintTarget(n), u: DoUpdateOnConflict) => stmt"${query.token}.onConflictDoUpdate(${n.token})(${u.token})"
+    case Conflict(query, ColumnsTarget(c), u: DoUpdateOnConflict)    => stmt"${query.token}.onConflictDoUpdate(${c.token})(${u.token})"
+  }
+
+  implicit def conflictUpdateTokenizer(implicit liftTokenizer: Tokenizer[Lift]): Tokenizer[DoUpdateOnConflict] = Tokenizer[DoUpdateOnConflict] {
+    case DoUpdateOnConflict(assignments, exclusions) =>
+      val excls = exclusions.map(a => a.copy(value = Ident(s"excluded.${a.property.token}")))
+      (assignments ++ excls).token
   }
 
   implicit def assignmentTokenizer(implicit liftTokenizer: Tokenizer[Lift]): Tokenizer[Assignment] = Tokenizer[Assignment] {

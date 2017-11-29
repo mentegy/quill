@@ -18,7 +18,8 @@ trait Unliftables {
     case orderingUnliftable(ast) => ast
     case optionOperationUnliftable(ast) => ast
     case traversableOperationUnliftable(ast) => ast
-    case q"$pack.Property.apply(${ a: Ast }, ${ b: String })" => Property(a, b)
+    case propertyUnliftable(ast) => ast
+    case excludedUnliftable(ast) => ast
     case q"$pack.Function.apply(${ a: List[Ident] }, ${ b: Ast })" => Function(a, b)
     case q"$pack.FunctionApply.apply(${ a: Ast }, ${ b: List[Ast] })" => FunctionApply(a, b)
     case q"$pack.BinaryOperation.apply(${ a: Ast }, ${ b: BinaryOperator }, ${ c: Ast })" => BinaryOperation(a, b, c)
@@ -123,6 +124,14 @@ trait Unliftables {
     case q"$pack.PropertyAlias.apply(${ a: List[String] }, ${ b: String })" => PropertyAlias(a, b)
   }
 
+  implicit val propertyUnliftable: Unliftable[Property] = Unliftable[Property] {
+    case q"$pack.Property.apply(${ a: Ast }, ${ b: String })" => Property(a, b)
+  }
+
+  implicit val excludedUnliftable: Unliftable[Excluded] = Unliftable[Excluded] {
+    case q"$pack.Excluded.apply(${ a: Property })" => Excluded(a)
+  }
+
   implicit def optionUnliftable[T](implicit u: Unliftable[T]): Unliftable[Option[T]] = Unliftable[Option[T]] {
     case q"scala.None"               => None
     case q"scala.Some.apply[$t]($v)" => Some(u.unapply(v).get)
@@ -136,11 +145,23 @@ trait Unliftables {
   }
 
   implicit val actionUnliftable: Unliftable[Action] = Unliftable[Action] {
-    case q"$pack.Update.apply(${ a: Ast }, ${ b: List[Assignment] })"      => Update(a, b)
-    case q"$pack.Insert.apply(${ a: Ast }, ${ b: List[Assignment] })"      => Insert(a, b)
-    case q"$pack.Delete.apply(${ a: Ast })"                                => Delete(a)
+    case q"$pack.Update.apply(${ a: Ast }, ${ b: List[Assignment] })" => Update(a, b)
+    case q"$pack.Insert.apply(${ a: Ast }, ${ b: List[Assignment] })" => Insert(a, b)
+    case q"$pack.Delete.apply(${ a: Ast })" => Delete(a)
     case q"$pack.Returning.apply(${ a: Ast }, ${ b: Ident }, ${ c: Ast })" => Returning(a, b, c)
-    case q"$pack.Foreach.apply(${ a: Ast }, ${ b: Ident }, ${ c: Ast })"   => Foreach(a, b, c)
+    case q"$pack.Foreach.apply(${ a: Ast }, ${ b: Ident }, ${ c: Ast })" => Foreach(a, b, c)
+    case q"$pack.Conflict.apply(${ a: Ast }, ${ b: ConflictTarget }, ${ c: ConflictAction })" => Conflict(a, b, c)
+  }
+
+  implicit val conflictTargetUnliftable: Unliftable[ConflictTarget] = Unliftable[ConflictTarget] {
+    case q"$pack.NoTarget"                                    => NoTarget
+    case q"$pack.ConstraintTarget.apply(${ a: String })"      => ConstraintTarget(a)
+    case q"$pack.ColumnsTarget.apply(${ a: List[Property] })" => ColumnsTarget(a)
+  }
+
+  implicit val conflictActionUnliftable: Unliftable[ConflictAction] = Unliftable[ConflictAction] {
+    case q"$pack.DoNothingOnConflict" => DoNothingOnConflict
+    case q"$pack.DoUpdateOnConflict.apply(${ a: List[Assignment] }, ${ b: List[Assignment] })" => DoUpdateOnConflict(a, b)
   }
 
   implicit val assignmentUnliftable: Unliftable[Assignment] = Unliftable[Assignment] {

@@ -88,7 +88,7 @@ case class ListContains(ast: Ast, body: Ast) extends TraversableOperation
 case class If(condition: Ast, `then`: Ast, `else`: Ast) extends Ast
 
 case class Assignment(alias: Ident, property: Ast, value: Ast) extends Ast
-
+case class Excluded(property: Ast) extends Ast
 //************************************************************
 
 sealed trait Operation extends Ast
@@ -125,6 +125,17 @@ case class Delete(query: Ast) extends Action
 case class Returning(action: Ast, alias: Ident, property: Ast) extends Action
 
 case class Foreach(query: Ast, alias: Ident, body: Ast) extends Action
+
+case class Conflict(insert: Ast, target: ConflictTarget, action: ConflictAction) extends Action
+
+sealed trait ConflictTarget
+case object NoTarget extends ConflictTarget
+case class ConstraintTarget(name: String) extends ConflictTarget
+case class ColumnsTarget(properties: List[Property]) extends ConflictTarget
+
+sealed trait ConflictAction
+case object DoNothingOnConflict extends ConflictAction
+case class DoUpdateOnConflict(assignments: List[Assignment], exclusions: List[Assignment]) extends ConflictAction
 
 //************************************************************
 

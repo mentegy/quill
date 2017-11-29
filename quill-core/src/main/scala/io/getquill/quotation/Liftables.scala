@@ -21,9 +21,10 @@ trait Liftables {
     case ast: Assignment => assignmentLiftable(ast)
     case ast: OptionOperation => optionOperationLiftable(ast)
     case ast: TraversableOperation => traversableOperationLiftable(ast)
+    case ast: Property => propertyLiftable(ast)
+    case ast: Excluded => excludedLiftable(ast)
     case Val(name, body) => q"$pack.Val($name, $body)"
     case Block(statements) => q"$pack.Block($statements)"
-    case Property(a, b) => q"$pack.Property($a, $b)"
     case Function(a, b) => q"$pack.Function($a, $b)"
     case FunctionApply(a, b) => q"$pack.FunctionApply($a, $b)"
     case BinaryOperation(a, b, c) => q"$pack.BinaryOperation($a, $b, $c)"
@@ -113,6 +114,14 @@ trait Liftables {
     case PropertyAlias(a, b) => q"$pack.PropertyAlias($a, $b)"
   }
 
+  implicit val propertyLiftable: Liftable[Property] = Liftable[Property] {
+    case Property(a, b) => q"$pack.Property($a, $b)"
+  }
+
+  implicit val excludedLiftable: Liftable[Excluded] = Liftable[Excluded] {
+    case Excluded(a) => q"$pack.Excluded($a)"
+  }
+
   implicit val orderingLiftable: Liftable[Ordering] = Liftable[Ordering] {
     case TupleOrdering(elems) => q"$pack.TupleOrdering($elems)"
     case Asc                  => q"$pack.Asc"
@@ -136,6 +145,18 @@ trait Liftables {
     case Delete(a)          => q"$pack.Delete($a)"
     case Returning(a, b, c) => q"$pack.Returning($a, $b, $c)"
     case Foreach(a, b, c)   => q"$pack.Foreach($a, $b, $c)"
+    case Conflict(a, b, c)  => q"$pack.Conflict($a, $b, $c)"
+  }
+
+  implicit val conflictTargetLiftable: Liftable[ConflictTarget] = Liftable[ConflictTarget] {
+    case NoTarget            => q"$pack.NoTarget"
+    case ConstraintTarget(a) => q"$pack.ConstraintTarget.apply($a)"
+    case ColumnsTarget(a)    => q"$pack.ColumnsTarget.apply($a)"
+  }
+
+  implicit val conflictActionLiftable: Liftable[ConflictAction] = Liftable[ConflictAction] {
+    case DoNothingOnConflict      => q"$pack.DoNothingOnConflict"
+    case DoUpdateOnConflict(a, b) => q"$pack.DoUpdateOnConflict.apply($a, $b)"
   }
 
   implicit val assignmentLiftable: Liftable[Assignment] = Liftable[Assignment] {

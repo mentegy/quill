@@ -13,6 +13,8 @@ private[dsl] trait QueryDsl {
   @compileTimeOnly(NonQuotedException.message)
   def querySchema[T](entity: String, columns: (T => (Any, String))*): EntityQuery[T] = NonQuotedException()
 
+  def excluded[T]: T = NonQuotedException()
+
   sealed trait Query[+T] {
 
     def map[R](f: T => R): Query[R]
@@ -91,6 +93,14 @@ private[dsl] trait QueryDsl {
   sealed trait Insert[E] extends Action[E] {
     @compileTimeOnly(NonQuotedException.message)
     def returning[R](f: E => R): ActionReturning[E, R] = NonQuotedException()
+
+    // TODO Open ticket for where, e.g. `onConflictDoNothing.where(_.col > 1)`
+    def onConflictDoNothing: Action[E] = NonQuotedException()
+    def onConflictDoNothing(constraint: String): Action[E] = NonQuotedException()
+    def onConflictDoNothing(target: E => Any, targets: (E => Any)*): Action[E] = NonQuotedException()
+
+    def onConflictDoUpdate(constraint: String)(assign: (E => (Any, Any)), assigns: (E => (Any, Any))*): Action[E]
+    def onConflictDoUpdate(target: E => Any, targets: (E => Any)*)(assign: (E => (Any, Any)), assigns: (E => (Any, Any))*): Action[E]
   }
 
   sealed trait ActionReturning[E, Output] extends Action[E]

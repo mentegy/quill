@@ -71,6 +71,7 @@ trait SqlIdiom extends Idiom {
       case a: If              => a.token
       case a: Lift            => a.token
       case a: Assignment      => a.token
+      case a: Excluded        => stmt"EXCLUDED.${a.property.token}"
       case a: OptionOperation => a.token
       case a @ (
         _: Function | _: FunctionApply | _: Dynamic | _: OptionOperation | _: Block |
@@ -320,6 +321,7 @@ trait SqlIdiom extends Idiom {
 
   implicit def assignmentTokenizer(implicit astTokenizer: Tokenizer[Ast], strategy: NamingStrategy): Tokenizer[Assignment] = Tokenizer[Assignment] {
     case Assignment(alias, prop, value) =>
+      println(s"TOKENIZIN: $alias, $prop, $value, ${prop.token}, ${scopedTokenizer(value)}")
       stmt"${prop.token} = ${scopedTokenizer(value)}"
   }
 
@@ -355,17 +357,17 @@ trait SqlIdiom extends Idiom {
           fail(s"Action ast can't be translated to sql: '$other'")
       }
 
-    val customAstTokenizer =
-      Tokenizer.withFallback[Ast](SqlIdiom.this.astTokenizer(_, strategy)) {
-        case q: Query                                 => astTokenizer.token(q)
-        case Property(Property(_, name), "isEmpty")   => stmt"${strategy.column(name).token} IS NULL"
-        case Property(Property(_, name), "isDefined") => stmt"${strategy.column(name).token} IS NOT NULL"
-        case Property(Property(_, name), "nonEmpty")  => stmt"${strategy.column(name).token} IS NOT NULL"
-        case Property(_, name)                        => strategy.column(name).token
-      }
-
-    tokenizer(customAstTokenizer)
+    tokenizer(actionAstTokenizer)
   }
+
+  protected def actionAstTokenizer(implicit astTokenizer: Tokenizer[Ast], strategy: NamingStrategy): Tokenizer[Ast] =
+    Tokenizer.withFallback[Ast](SqlIdiom.this.astTokenizer(_, strategy)) {
+      case q: Query                                 => astTokenizer.token(q)
+      case Property(Property(_, name), "isEmpty")   => stmt"${strategy.column(name).token} IS NULL"
+      case Property(Property(_, name), "isDefined") => stmt"${strategy.column(name).token} IS NOT NULL"
+      case Property(Property(_, name), "nonEmpty")  => stmt"${strategy.column(name).token} IS NOT NULL"
+      case Property(_, name)                        => strategy.column(name).token
+    }
 
   implicit def entityTokenizer(implicit astTokenizer: Tokenizer[Ast], strategy: NamingStrategy): Tokenizer[Entity] = Tokenizer[Entity] {
     case Entity(name, _) => strategy.table(name).token

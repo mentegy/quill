@@ -12,6 +12,7 @@ trait StatefulTransformer[T] {
       case e: Value                => apply(e)
       case e: Assignment           => apply(e)
       case e: Ident                => (e, this)
+      case e: Excluded             => (e, this)
       case e: OptionOperation      => apply(e)
       case e: TraversableOperation => apply(e)
 
@@ -217,6 +218,19 @@ trait StatefulTransformer[T] {
         val (at, att) = apply(a)
         val (ct, ctt) = att.apply(c)
         (Foreach(at, b, ct), ctt)
+      case Conflict(a, b, c) =>
+        val (at, att) = apply(a)
+        val (ct, ctt) = att.apply(c)
+        (Conflict(at, b, ct), ctt)
+    }
+
+  def apply(e: ConflictAction): (ConflictAction, StatefulTransformer[T]) =
+    e match {
+      case DoNothingOnConflict => (e, this)
+      case DoUpdateOnConflict(a, b) =>
+        val (at, att) = apply(a)(_.apply)
+        val (bt, btt) = att.apply(b)(_.apply)
+        (DoUpdateOnConflict(at, bt), btt)
     }
 
   def apply[U, R](list: List[U])(f: StatefulTransformer[T] => U => (R, StatefulTransformer[T])) =

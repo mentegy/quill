@@ -1,5 +1,7 @@
 package io.getquill.norm
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import io.getquill.ast._
 
 object RenameProperties extends StatelessTransformer {
@@ -29,17 +31,27 @@ object RenameProperties extends StatelessTransformer {
             val bodyr = BetaReduction(body, replace: _*)
             (Returning(action, alias, bodyr), schema)
         }
+      case Conflict(a: Action, target, act) =>
+        applySchema(a) match {
+          case (action, schema) =>
+            // TODO target & act?
+            (Conflict(action, target, act), schema)
+        }
       case q => (q, Tuple(List.empty))
     }
 
+  private val counter = new AtomicInteger()
   private def applySchema(q: Query, a: List[Assignment], f: (Query, List[Assignment]) => Action): (Action, Ast) =
     applySchema(q) match {
       case (q, schema) =>
         val ar = a.map {
           case Assignment(alias, prop, value) =>
+            val i = counter.incrementAndGet()
+            println(s"RENAME PROPS $i BEFORE: $alias, $prop, $value")
             val replace = replacements(alias, schema)
             val propr = BetaReduction(prop, replace: _*)
             val valuer = BetaReduction(value, replace: _*)
+            println(s"RENAME PROPS $i AFTER: $alias, $propr, $valuer")
             Assignment(alias, propr, valuer)
         }
         (f(q, ar), schema)
