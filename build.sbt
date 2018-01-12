@@ -178,6 +178,18 @@ lazy val `quill-orientdb` =
       )
       .dependsOn(`quill-sql-jvm` % "compile->compile;test->test")
 
+lazy val `quill-util` =
+  (project in file("quill-util"))
+    .settings(commonSettings: _*)
+    .settings(mimaSettings: _*)
+    .settings(
+      fork in Test := true
+    )
+    .dependsOn(`quill-core-jvm` % "compile->compile;test->test")
+    .dependsOn(`quill-sql-jvm` % "compile->compile;test->test;optional")
+    .dependsOn(`quill-jdbc` % "compile->compile;test->test;optional")
+    .dependsOn(`quill-cassandra` % "compile->compile;test->test;optional")
+
 lazy val `tut-sources` = Seq(
   "CASSANDRA.md",
   "README.md"
