@@ -137,7 +137,9 @@ object SqlQuery {
         val b = base(q, alias)
         val select = BetaReduction(p, a -> Tuple(List(g, x)))
         val flattenSelect = FlattenGroupByAggregation(x)(select)
-        b.copy(groupBy = Some(g), select = this.selectValues(flattenSelect))
+        val res = b.copy(groupBy = Some(g), select = this.selectValues(flattenSelect))
+        println(s"FOUND GROUP BY $res")
+        res
 
       case GroupBy(q, Ident(alias), p) =>
         fail("A `groupBy` clause must be followed by `map`.")

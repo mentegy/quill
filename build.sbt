@@ -4,7 +4,6 @@ import scalariform.formatter.preferences._
 import sbtrelease.ReleasePlugin
 import scala.sys.process.Process
 
-enablePlugins(TutPlugin)
 
 lazy val scalaVersionProperty = Option(System.getProperty("scalaVersion"))
 
@@ -19,7 +18,6 @@ lazy val modules = Seq[sbt.ClasspathDep[sbt.ProjectReference]](
 lazy val `quill` =
   (project in file("."))
     .settings(commonSettings)
-    .settings(`tut-settings`:_*)
     .aggregate(modules.map(_.project): _*)
     .dependsOn(modules: _*)
 
@@ -78,6 +76,11 @@ lazy val `quill-jdbc` =
         "com.microsoft.sqlserver" % "mssql-jdbc"           % "6.1.7.jre8-preview" % Test
       )
     )
+    .dependsOn(`quill-sql-jvm` % "compile->compile;test->test")
+
+lazy val `quill-test` =
+  (project in file("quill-test"))
+    .settings(commonSettings: _*)
     .dependsOn(`quill-sql-jvm` % "compile->compile;test->test")
 
 lazy val `quill-spark` =
@@ -178,26 +181,6 @@ lazy val `quill-orientdb` =
       )
       .dependsOn(`quill-sql-jvm` % "compile->compile;test->test")
 
-lazy val `tut-sources` = Seq(
-  "CASSANDRA.md",
-  "README.md"
-)
-
-lazy val `tut-settings` = Seq(
-  scalacOptions in Tut := Seq(),
-  tutSourceDirectory := baseDirectory.value / "target" / "tut",
-  tutNameFilter := `tut-sources`.map(_.replaceAll("""\.""", """\.""")).mkString("(", "|", ")").r,
-  sourceGenerators in Compile +=
-    Def.task {
-      `tut-sources`.foreach { name =>
-        val source = baseDirectory.value / name
-        val file = baseDirectory.value / "target" / "tut" / name
-        val str = IO.read(source).replace("```scala", "```tut")
-        IO.write(file, str)
-      }
-      Seq()
-    }.taskValue
-)
 
 lazy val mimaSettings = MimaPlugin.mimaDefaultSettings ++ Seq(
   mimaPreviousArtifacts := {

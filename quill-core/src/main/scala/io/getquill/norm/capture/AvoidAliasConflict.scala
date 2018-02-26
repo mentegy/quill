@@ -55,8 +55,11 @@ private case class AvoidAliasConflict(state: collection.Set[Ident])
       case SortBy(Unaliased(q), x, p, o) =>
         apply(x, p)(SortBy(q, _, _, o))
 
-      case GroupBy(Unaliased(q), x, p) =>
-        apply(x, p)(GroupBy(q, _, _))
+      case pre @ GroupBy(Unaliased(q), x, p) =>
+        println(s"PRE  - ALIASES: $pre")
+        val res = apply(x, p)(GroupBy(q, _, _))
+        println(s"POST - ALIASES: ${res._1} -> ${res._2}")
+        res
 
       case Join(t, a, b, iA, iB, o) =>
         val (ar, art) = apply(a)

@@ -88,14 +88,20 @@ object ExpandNestedQueries {
             case List(SelectValue(i: Ident, _, c)) =>
               SelectValue(Property(i, name), None, c)
             case other =>
+              println(s"HEY: $other - $name")
               SelectValue(Ident(name), Some(name), false)
           }
       }
     }
 
     references.toList.sortBy(_.ast.toString).toList match {
-      case Nil  => select
-      case refs => refs.map(expandReference)
+      case Nil =>
+        println(s"EMPTY: $select, $references")
+        select
+      case refs =>
+        val r = refs.map(expandReference)
+        println(s"NON-EMPTY: $select, $references")
+        r
     }
   }
 
