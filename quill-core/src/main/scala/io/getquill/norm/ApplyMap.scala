@@ -26,6 +26,7 @@ object ApplyMap {
       //  map(i => (i.i, i.l)).distinct.map(x => (x._1, x._2)) =>
       //    map(i => (i.i, i.l)).distinct
       case Map(Distinct(DetachableMap(a, b, c)), d, e) if isomorphic(e, c, d) =>
+        println("applied distinct")
         Some(Distinct(Map(a, b, c)))
 
       // a.map(b => c).map(d => e) =>
@@ -80,6 +81,7 @@ object ApplyMap {
       // a.map(b => c).nested =>
       //    a.nested.map(b => c)
       case Nested(DetachableMap(a, b, c)) =>
+        println("applied nested")
         Some(Map(Nested(a), b, c))
 
       // a.map(b => c).*join(d.map(e => f)).on((iA, iB) => on)

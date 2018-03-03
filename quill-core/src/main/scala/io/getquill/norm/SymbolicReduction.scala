@@ -1,10 +1,6 @@
 package io.getquill.norm
 
-import io.getquill.ast.Filter
-import io.getquill.ast.FlatMap
-import io.getquill.ast.Query
-import io.getquill.ast.Union
-import io.getquill.ast.UnionAll
+import io.getquill.ast._
 
 object SymbolicReduction {
 
@@ -18,6 +14,12 @@ object SymbolicReduction {
         val er = AttachToEntity(Filter(_, _, cr))(e)
         Some(FlatMap(a, d, er))
 
+      /* case FlatMap(Distinct(Map(a, b, p: Property)), i, e: Query) =>
+        val pr = BetaReduction(p, b -> i)
+        BetaReduction(e, i -> pr) match {
+          case `e` => None
+          case er  => Some(FlatMap(Distinct(Map(a, b, p)), i, er))
+        }*/
       // a.flatMap(b => c).flatMap(d => e) =>
       //     a.flatMap(b => c.flatMap(d => e))
       case FlatMap(FlatMap(a, b, c), d, e) =>

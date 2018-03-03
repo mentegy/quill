@@ -111,9 +111,14 @@ case class BetaReduction(map: collection.Map[Ast, Ast])
 
 object BetaReduction {
 
-  def apply(ast: Ast, t: (Ast, Ast)*): Ast =
+  def apply(ast: Ast, t: (Ast, Ast)*): Ast = {
+    println(s"BETA: $ast : $t")
+    /*Thread.currentThread().getStackTrace.take(5).foreach(println)
+    println("FINIS\n")*/
+
     BetaReduction(t.toMap)(ast) match {
       case `ast` => ast
       case other => apply(other)
     }
+  }
 }

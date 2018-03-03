@@ -51,10 +51,6 @@ services:
     image: quillscala/setup
     links:
       - postgres:postgres
-      - mysql:mysql
-      - cassandra:cassandra
-      - orientdb:orientdb
-      - sqlserver:sqlserver
     volumes:
       - ./:/app
     command:

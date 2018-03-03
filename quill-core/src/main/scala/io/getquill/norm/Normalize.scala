@@ -3,7 +3,7 @@ package io.getquill.norm
 import io.getquill.ast.Ast
 import io.getquill.ast.Query
 import io.getquill.ast.StatelessTransformer
-import io.getquill.norm.capture.AvoidCapture
+import io.getquill.norm.capture.{ AvoidCapture, AvoidDistinctFlatMapIdentReference }
 import io.getquill.ast.Action
 
 import scala.annotation.tailrec
@@ -17,16 +17,26 @@ object Normalize extends StatelessTransformer {
     NormalizeReturning(super.apply(q))
 
   override def apply(q: Query): Query =
-    norm(AvoidCapture(q))
+    norm(AvoidDistinctFlatMapIdentReference(AvoidCapture(q)))
 
   @tailrec
   private def norm(q: Query): Query =
     q match {
-      case NormalizeNestedStructures(query) => norm(query)
-      case ApplyMap(query)                  => norm(query)
-      case SymbolicReduction(query)         => norm(query)
-      case AdHocReduction(query)            => norm(query)
-      case OrderTerms(query)                => norm(query)
-      case other                            => other
+      case NormalizeNestedStructures(query) =>
+        println(s"NormalizeNestedStructures: \n 		$q -> \n 		$query")
+        norm(query)
+      case ApplyMap(query) =>
+        println(s"ApplyMap: \n 		$q -> \n 		$query")
+        norm(query)
+      case SymbolicReduction(query) =>
+        println(s"SymbolicReduction: \n 		$q -> \n 		$query")
+        norm(query)
+      case AdHocReduction(query) =>
+        println(s"AdHocReduction: \n 		$q -> \n 		$query")
+        norm(query)
+      case OrderTerms(query) =>
+        println(s"OrderTerms: \n 		$q -> \n 		$query")
+        norm(query)
+      case other => other
     }
 }
