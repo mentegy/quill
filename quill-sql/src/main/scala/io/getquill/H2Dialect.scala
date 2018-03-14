@@ -6,15 +6,15 @@ import io.getquill.context.sql.idiom.PositionalBindVariables
 import io.getquill.context.sql.idiom.SqlIdiom
 import io.getquill.context.sql.idiom.ConcatSupport
 
-trait H2Dialect
-  extends SqlIdiom
+class H2Dialect[N <: NamingStrategy](val naming: N)
+  extends SqlIdiom[N]
   with PositionalBindVariables
   with ConcatSupport {
 
-  private[getquill] val preparedStatementId = new AtomicInteger
-
   override def prepareForProbing(string: String) =
-    s"PREPARE p${preparedStatementId.incrementAndGet.toString.token} AS $string}"
+    s"PREPARE p${H2Dialect.preparedStatementId.incrementAndGet.toString.token} AS $string}"
 }
 
-object H2Dialect extends H2Dialect
+object H2Dialect {
+  private[getquill] val preparedStatementId = new AtomicInteger
+}

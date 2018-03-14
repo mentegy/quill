@@ -1,6 +1,6 @@
 package io.getquill
 
-import io.getquill.ast._
+import io.getquill.ast.{ Query => AstQuery, Action => AstAction, _ }
 import io.getquill.idiom.Idiom
 import io.getquill.idiom.SetContainsToken
 import io.getquill.idiom.Statement
@@ -8,25 +8,23 @@ import io.getquill.idiom.StatementInterpolator._
 import io.getquill.norm.Normalize
 import io.getquill.util.Interleave
 
-object MirrorIdiom extends MirrorIdiom
-
-class MirrorIdiom extends Idiom {
+class MirrorIdiom[N <: NamingStrategy](val naming: N) extends Idiom[N] {
 
   override def prepareForProbing(string: String) = string
 
   override def liftingPlaceholder(index: Int): String = "?"
 
-  override def translate(ast: Ast)(implicit naming: NamingStrategy): (Ast, Statement) = {
+  override def translate(ast: Ast): (Ast, Statement) = {
     val normalizedAst = Normalize(ast)
     (normalizedAst, stmt"${normalizedAst.token}")
   }
 
   implicit def astTokenizer(implicit liftTokenizer: Tokenizer[Lift]): Tokenizer[Ast] = Tokenizer[Ast] {
-    case ast: Query                => ast.token
+    case ast: AstQuery             => ast.token
     case ast: Function             => ast.token
     case ast: Value                => ast.token
     case ast: Operation            => ast.token
-    case ast: Action               => ast.token
+    case ast: AstAction            => ast.token
     case ast: Ident                => ast.token
     case ast: Property             => ast.token
     case ast: Infix                => ast.token
@@ -58,7 +56,7 @@ class MirrorIdiom extends Idiom {
     case Val(name, body) => stmt"val ${name.token} = ${body.token}"
   }
 
-  implicit def queryTokenizer(implicit liftTokenizer: Tokenizer[Lift]): Tokenizer[Query] = Tokenizer[Query] {
+  implicit def queryTokenizer(implicit liftTokenizer: Tokenizer[Lift]): Tokenizer[AstQuery] = Tokenizer[AstQuery] {
 
     case Entity(name, Nil) => stmt"querySchema(${s""""$name"""".token})"
 
@@ -178,7 +176,7 @@ class MirrorIdiom extends Idiom {
     case e => stmt"${e.name.token}"
   }
 
-  implicit def actionTokenizer(implicit liftTokenizer: Tokenizer[Lift]): Tokenizer[Action] = Tokenizer[Action] {
+  implicit def actionTokenizer(implicit liftTokenizer: Tokenizer[Lift]): Tokenizer[AstAction] = Tokenizer[AstAction] {
     case Update(query, assignments)    => stmt"${query.token}.update(${assignments.token})"
     case Insert(query, assignments)    => stmt"${query.token}.insert(${assignments.token})"
     case Delete(query)                 => stmt"${query.token}.delete"

@@ -4,7 +4,6 @@ import io.getquill.ast._
 import io.getquill.context.sql.norm.FlattenGroupByAggregation
 import io.getquill.norm.BetaReduction
 import io.getquill.util.Messages.fail
-import io.getquill.Literal
 
 case class OrderByCriteria(ast: Ast, ordering: PropertyOrdering)
 
@@ -16,13 +15,13 @@ case class JoinContext(t: JoinType, a: FromContext, b: FromContext, on: Ast) ext
 case class FlatJoinContext(t: JoinType, a: FromContext, on: Ast) extends FromContext
 
 sealed trait SqlQuery {
-  override def toString = {
+  /*override def toString = {
     import io.getquill.MirrorSqlDialect._
     import io.getquill.idiom.StatementInterpolator._
     implicit val naming = Literal
     implicit val tokenizer = defaultTokenizer
     this.token.toString
-  }
+  }*/
 }
 
 sealed trait SetOperation

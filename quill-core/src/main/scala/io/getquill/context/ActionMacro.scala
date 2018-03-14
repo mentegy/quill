@@ -16,7 +16,7 @@ class ActionMacro(val c: MacroContext)
     c.untypecheck {
       q"""
         ..${EnableReflectiveCalls(c)}
-        val expanded = ${expand(extractAst(quoted))}
+        val expanded = ${expand(extractAst(quoted), null)}
         ${c.prefix}.executeAction(
           expanded.string,
           expanded.prepare
@@ -28,7 +28,7 @@ class ActionMacro(val c: MacroContext)
     c.untypecheck {
       q"""
         ..${EnableReflectiveCalls(c)}
-        val expanded = ${expand(extractAst(quoted))}
+        val expanded = ${expand(extractAst(quoted), null)}
         ${c.prefix}.executeActionReturning(
           expanded.string,
           expanded.prepare,
@@ -82,14 +82,14 @@ class ActionMacro(val c: MacroContext)
           case q"($param) => $value" =>
             val nestedLift =
               lift match {
-                case ScalarQueryLift(name, batch: Tree, encoder: Tree) =>
-                  ScalarValueLift("value", value, encoder)
+                case ScalarQueryLift(name, batch: Tree, tpe: Tree) =>
+                  ScalarValueLift("value", value, tpe)
                 case CaseClassQueryLift(name, batch: Tree) =>
                   CaseClassValueLift("value", value)
               }
             val (ast, _) = reifyLiftings(BetaReduction(body, alias -> nestedLift))
             c.untypecheck {
-              call(batch, param, expand(ast))
+              call(batch, param, expand(ast, null))
             }
         }
       case other =>

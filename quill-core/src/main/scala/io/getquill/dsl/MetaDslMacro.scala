@@ -39,12 +39,13 @@ class MetaDslMacro(val c: MacroContext) {
     actionMeta[T](value("Encoder", t.tpe, exclude: _*), "update")
 
   def materializeQueryMeta[T](implicit t: WeakTypeTag[T]): Tree = {
-    val value = this.value("Decoder", t.tpe)
+    //val value = this.value("Decoder", t.tpe)
+    val value = Scalar(None, t.tpe, EmptyTree, false)
     q"""
       new ${c.prefix}.QueryMeta[$t] {
         private[this] val _expanded = ${expandQuery[T](value)}
         def expand = _expanded
-        val extract = ${extract[T](value)}
+        val extract = (row: Any) => null.asInstanceOf[$t]
       }
     """
   }
@@ -247,6 +248,8 @@ class MetaDslMacro(val c: MacroContext) {
         c.fail("Can't exclude all entity properties")
       }
     }
+
+    println("I AM HERE")
 
     filterExcludes(apply(tpe, term = None, nested = false))
   }

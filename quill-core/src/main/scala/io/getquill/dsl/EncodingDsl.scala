@@ -1,8 +1,5 @@
 package io.getquill.dsl
 
-import io.getquill.quotation.NonQuotedException
-
-import scala.annotation.compileTimeOnly
 import scala.language.experimental.macros
 import scala.language.higherKinds
 
@@ -15,7 +12,6 @@ trait LowPriorityImplicits {
 }
 
 trait EncodingDsl extends LowPriorityImplicits {
-  this: CoreDsl =>
 
   type PrepareRow
   type ResultRow
@@ -29,28 +25,6 @@ trait EncodingDsl extends LowPriorityImplicits {
   type BaseDecoder[T] = (Index, ResultRow) => T
 
   type Decoder[T] <: BaseDecoder[T]
-
-  /* ************************************************************************** */
-
-  def lift[T](v: T): T = macro EncodingDslMacro.lift[T]
-
-  @compileTimeOnly(NonQuotedException.message)
-  def liftScalar[T](v: T)(implicit e: Encoder[T]): T = NonQuotedException()
-
-  @compileTimeOnly(NonQuotedException.message)
-  def liftCaseClass[T](v: T): T = NonQuotedException()
-
-  /* ************************************************************************** */
-
-  def liftQuery[U[_] <: Traversable[_], T](v: U[T]): Query[T] = macro EncodingDslMacro.liftQuery[T]
-
-  @compileTimeOnly(NonQuotedException.message)
-  def liftQueryScalar[U[_] <: Traversable[_], T](v: U[T])(implicit e: Encoder[T]): Query[T] = NonQuotedException()
-
-  @compileTimeOnly(NonQuotedException.message)
-  def liftQueryCaseClass[U[_] <: Traversable[_], T](v: U[T]): Query[T] = NonQuotedException()
-
-  /* ************************************************************************** */
 
   type MappedEncoding[I, O] = io.getquill.MappedEncoding[I, O]
   val MappedEncoding = io.getquill.MappedEncoding

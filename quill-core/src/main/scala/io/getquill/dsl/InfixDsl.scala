@@ -3,7 +3,7 @@ package io.getquill.dsl
 import io.getquill.quotation.NonQuotedException
 import scala.annotation.compileTimeOnly
 
-private[dsl] trait InfixDsl {
+trait InfixDsl {
 
   private[dsl] trait InfixValue {
     def as[T]: T

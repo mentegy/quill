@@ -8,8 +8,25 @@ import io.getquill.util.EnableReflectiveCalls
 class QueryMacro(val c: MacroContext) extends ContextMacro {
   import c.universe.{ Ident => _, _ }
 
+  def runIoQuery[T](quoted: Tree)(implicit t: WeakTypeTag[T]): Tree = {
+    val ast = extractAst(c.typecheck(quoted))
+    val res = c.typecheck {
+      q"""
+        val (ast, statement) = ${translate(ast)}
+        io.getquill.context.ExpandQuery(${c.prefix}, ast, statement, ${c.reifyRuntimeClass(t.tpe)})
+          .asInstanceOf[io.getquill.monad.IO[List[$t]]]
+      """
+    }
+    println(res)
+    res
+  }
+
   def runQuery[T](quoted: Tree)(implicit t: WeakTypeTag[T]): Tree =
-    expandQuery[T](quoted, "executeQuery")
+    {
+      val res = expandQuery[T](quoted, "executeQuery")
+      println(s"\n\nRES: $res")
+      res
+    }
 
   def runQuerySingle[T](quoted: Tree)(implicit t: WeakTypeTag[T]): Tree =
     expandQuery[T](quoted, "executeQuerySingle")
@@ -25,7 +42,7 @@ class QueryMacro(val c: MacroContext) extends ContextMacro {
     c.untypecheck {
       q"""
         ..${EnableReflectiveCalls(c)}
-        val expanded = ${expand(ast)}
+        val expanded = ${expand(ast, null)}
         ${c.prefix}.${TermName(method)}(
           expanded.string,
           expanded.prepare,
@@ -38,11 +55,13 @@ class QueryMacro(val c: MacroContext) extends ContextMacro {
   private def expandQueryWithMeta[T](quoted: Tree, method: String)(implicit t: WeakTypeTag[T]) = {
     val metaTpe = c.typecheck(tq"${c.prefix}.QueryMeta[$t]", c.TYPEmode).tpe
     val meta = c.inferImplicitValue(metaTpe).orElse(q"${c.prefix}.materializeQueryMeta[$t]")
-    val ast = extractAst(c.typecheck(q"${c.prefix}.quote($meta.expand($quoted))"))
-    c.untypecheck {
+    val tree = q"${c.prefix}.quote($meta.expand($quoted))"
+    println(s"trying to exapnd: $tree")
+    val ast = extractAst(c.typecheck(tree))
+    val tr2 = c.untypecheck {
       q"""
         ..${EnableReflectiveCalls(c)}
-        val expanded = ${expand(ast)}
+        val expanded = ${expand(ast, t)}
         ${c.prefix}.${TermName(method)}(
           expanded.string,
           expanded.prepare,
@@ -50,5 +69,6 @@ class QueryMacro(val c: MacroContext) extends ContextMacro {
         )  
       """
     }
+    tr2
   }
 }

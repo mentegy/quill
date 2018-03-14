@@ -2,8 +2,8 @@ package io.getquill.dsl
 
 import scala.language.experimental.macros
 
-trait MetaDslLowPriorityImplicits {
-  this: MetaDsl =>
+trait IdiomMetaDslLowPriorityImplicits {
+  this: IdiomMetaDsl =>
 
   implicit def materializeQueryMeta[T]: QueryMeta[T] = macro MetaDslMacro.materializeQueryMeta[T]
   implicit def materializeUpdateMeta[T]: UpdateMeta[T] = macro MetaDslMacro.materializeUpdateMeta[T]
@@ -11,10 +11,8 @@ trait MetaDslLowPriorityImplicits {
   implicit def materializeSchemaMeta[T]: SchemaMeta[T] = macro MetaDslMacro.materializeSchemaMeta[T]
 }
 
-trait MetaDsl extends MetaDslLowPriorityImplicits {
-  this: QueryDsl with QuotationDsl =>
-
-  type Embedded = io.getquill.Embedded
+trait IdiomMetaDsl extends IdiomMetaDslLowPriorityImplicits {
+  this: CoreDsl =>
 
   def schemaMeta[T](entity: String, columns: (T => (Any, String))*): SchemaMeta[T] = macro MetaDslMacro.schemaMeta[T]
   def queryMeta[T, R](expand: Quoted[Query[T] => Query[R]])(extract: R => T): QueryMeta[T] = macro MetaDslMacro.queryMeta[T, R]

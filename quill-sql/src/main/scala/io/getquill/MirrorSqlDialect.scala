@@ -4,11 +4,11 @@ import io.getquill.context.sql.idiom.SqlIdiom
 import io.getquill.context.sql.idiom.QuestionMarkBindVariables
 import io.getquill.context.sql.idiom.ConcatSupport
 
-trait MirrorSqlDialect
-  extends SqlIdiom
+class MirrorSqlDialect[N <: NamingStrategy](val naming: N)
+  extends SqlIdiom[N]
   with QuestionMarkBindVariables
-  with ConcatSupport
+  with ConcatSupport {
 
-object MirrorSqlDialect extends MirrorSqlDialect {
-  override def prepareForProbing(string: String) = string
+  override def prepareForProbing(string: String): String = string
 }
+

@@ -1,17 +1,13 @@
 package io.getquill.context
 
 import io.getquill.ast._
-import io.getquill.idiom.Statement
-import io.getquill.idiom.ReifyStatement
-import io.getquill.NamingStrategy
-import io.getquill.idiom.Idiom
+import io.getquill.idiom.{ Idiom, ReifyStatement, Statement }
+import io.getquill.monad.IO
 
-case class Expand[C <: Context[_, _]](
-  val context: C,
-  val ast:     Ast,
-  statement:   Statement,
-  idiom:       Idiom,
-  naming:      NamingStrategy
+case class Expand[I <: Idiom[_], R](
+  idiom:     I,
+  ast:       Ast,
+  statement: Statement
 ) {
 
   val (string, liftings) =
@@ -22,14 +18,29 @@ case class Expand[C <: Context[_, _]](
       forProbing = false
     )
 
-  val prepare =
-    (row: context.PrepareRow) => {
+  /* val prepare =
+    (row: Any) => {
       val (_, values, prepare) = liftings.foldLeft((0, List.empty[Any], row)) {
         case ((idx, values, row), lift) =>
           val encoder = lift.encoder.asInstanceOf[context.Encoder[Any]]
           val newRow = encoder(idx, lift.value, row)
           (idx + 1, lift.value :: values, newRow)
       }
-      (values, prepare)
-    }
+      (Nil, row)
+    }*/
+}
+
+case class ExpandQuery[I <: Idiom[_], R](
+  idiom:     I,
+  ast:       Ast,
+  statement: Statement,
+  ct:        Class[R]
+) extends IO[List[R]] {
+  val (string, liftings) =
+    ReifyStatement(
+      idiom.liftingPlaceholder,
+      idiom.emptySetContainsToken,
+      statement,
+      forProbing = false
+    )
 }

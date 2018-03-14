@@ -1,6 +1,7 @@
-package io.getquill.context
+package io.getquill.idiom
 
-import scala.reflect.macros.whitebox.{ Context => MacroContext }
+
+import scala.reflect.macros.whitebox.Context
 import io.getquill.ast.Ast
 import io.getquill.ast.Dynamic
 import io.getquill.quotation.Quotation
@@ -8,13 +9,13 @@ import io.getquill.util.Messages._
 import io.getquill.quotation.IsDynamic
 import io.getquill.ast.Lift
 import io.getquill.NamingStrategy
-import io.getquill.idiom._
+import io.getquill.context.{ProbeStatement, VerifyFreeVariables}
 
 import scala.util.Success
 import scala.util.Failure
 
-trait ContextMacro extends Quotation {
-  val c: MacroContext
+trait IdiomMacro extends Quotation {
+  val c: Context
   import c.universe.{ Function => _, Ident => _, _ }
 
   protected def expand[T](ast: Ast, t: WeakTypeTag[T]): Tree = {

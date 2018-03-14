@@ -2,15 +2,21 @@ package io.getquill.context
 
 import scala.language.higherKinds
 import scala.language.experimental.macros
-import io.getquill.dsl.CoreDsl
+import io.getquill.dsl._
 import io.getquill.util.Messages.fail
 import java.io.Closeable
+
 import scala.util.Try
 import io.getquill.NamingStrategy
 
-trait Context[Idiom <: io.getquill.idiom.Idiom, Naming <: NamingStrategy]
+trait Context[Idiom <: io.getquill.idiom.Idiom[Naming], Naming <: NamingStrategy]
   extends Closeable
-  with CoreDsl {
+  with InfixDsl
+  with OrdDsl
+  with QueryDsl
+  with QuotationDsl
+  with MetaDsl
+  with EncodingDsl {
 
   type Result[T]
   type RunQuerySingleResult[T]

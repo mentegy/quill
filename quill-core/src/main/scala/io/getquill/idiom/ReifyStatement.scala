@@ -50,7 +50,7 @@ object ReifyStatement {
           lift.value.asInstanceOf[Traversable[Any]].toList match {
             case Nil => tokens :+ emptySetContainsToken(a)
             case values =>
-              val liftings = values.map(v => ScalarLiftToken(ScalarValueLift(lift.name, v, lift.encoder)))
+              val liftings = values.map(v => ScalarLiftToken(ScalarValueLift(lift.name, v, lift.tpe)))
               val separators = List.fill(liftings.size - 1)(StringToken(", "))
               (tokens :+ stmt"$a $op (") ++ Interleave(liftings, separators) :+ StringToken(")")
           }

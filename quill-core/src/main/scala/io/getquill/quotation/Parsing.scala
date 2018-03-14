@@ -101,15 +101,15 @@ trait Parsing {
 
   val liftParser: Parser[Lift] = Parser[Lift] {
 
-    case q"$pack.liftScalar[$t]($value)($encoder)"          => ScalarValueLift(value.toString, value, encoder)
-    case q"$pack.liftCaseClass[$t]($value)"                 => CaseClassValueLift(value.toString, value)
+    case q"$pack.liftScalar[$t]($value)"             => ScalarValueLift(value.toString, value, c.reifyRuntimeClass(t.tpe))
+    case q"$pack.liftCaseClass[$t]($value)"          => CaseClassValueLift(value.toString, value)
 
-    case q"$pack.liftQueryScalar[$t, $u]($value)($encoder)" => ScalarQueryLift(value.toString, value, encoder)
-    case q"$pack.liftQueryCaseClass[$t, $u]($value)"        => CaseClassQueryLift(value.toString, value)
+    case q"$pack.liftQueryScalar[$t, $u]($value)"    => ScalarQueryLift(value.toString, value, c.reifyRuntimeClass(t.tpe))
+    case q"$pack.liftQueryCaseClass[$t, $u]($value)" => CaseClassQueryLift(value.toString, value)
 
     // Unused, it's here only to make eclipse's presentation compiler happy :(
-    case q"$pack.lift[$t]($value)"                          => ScalarValueLift(value.toString, value, q"null")
-    case q"$pack.liftQuery[$t, $u]($value)"                 => ScalarQueryLift(value.toString, value, q"null")
+    case q"$pack.lift[$t]($value)"                   => ScalarValueLift(value.toString, value, c.reifyRuntimeClass(t.tpe))
+    case q"$pack.liftQuery[$t, $u]($value)"          => ScalarQueryLift(value.toString, value, c.reifyRuntimeClass(t.tpe))
   }
 
   val quotedAstParser: Parser[Ast] = Parser[Ast] {

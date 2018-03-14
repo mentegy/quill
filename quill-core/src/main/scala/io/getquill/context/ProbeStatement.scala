@@ -14,7 +14,7 @@ import io.getquill.idiom.Idiom
 
 object ProbeStatement {
 
-  private val cache = new Cache[Types#Type, Context[Idiom, NamingStrategy]]
+  private val cache = new Cache[Types#Type, Context[Idiom[NamingStrategy], NamingStrategy]]
 
   def apply(statement: String, c: MacroContext) = {
     import c.universe.{ Try => _, _ }
@@ -22,7 +22,7 @@ object ProbeStatement {
     def resolveContext(tpe: Type) =
       tpe match {
         case tpe if tpe <:< c.weakTypeOf[QueryProbing] =>
-          LoadObject[Context[Idiom, NamingStrategy]](c)(tpe) match {
+          LoadObject[Context[Idiom[NamingStrategy], NamingStrategy]](c)(tpe) match {
             case Success(context) =>
               Some(context)
             case Failure(ex) =>

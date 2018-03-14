@@ -7,8 +7,10 @@ class QueryDslMacro(val c: MacroContext) {
 
   import c.universe._
 
-  def expandEntity[T](implicit t: WeakTypeTag[T]): Tree =
-    q"${meta[T]("Schema")}.entity"
+  def expandEntity[T](implicit t: WeakTypeTag[T]): Tree = {
+    val res = q"${meta[T]("Schema")}.entity"
+    res
+  }
 
   def expandInsert[T](value: Tree)(implicit t: WeakTypeTag[T]): Tree =
     expandAction(value, "Insert")
@@ -20,8 +22,10 @@ class QueryDslMacro(val c: MacroContext) {
     q"${meta(prefix)}.expand(${c.prefix}, $value)"
 
   private def meta[T](prefix: String)(implicit t: WeakTypeTag[T]): Tree = {
-    val expanderTpe = c.typecheck(tq"io.getquill.dsl.MetaDsl#${TypeName(s"${prefix}Meta")}[$t]", c.TYPEmode)
-    c.inferImplicitValue(expanderTpe.tpe, silent = true) match {
+    val tree = tq"io.getquill.dsl.IdiomMetaDsl#${TypeName(s"${prefix}Meta")}[$t]"
+    println(s"meta for $tree")
+    val expanderTpe = c.typecheck(tree, c.TYPEmode)
+    c.inferImplicitValue(expanderTpe.tpe) match {
       case EmptyTree => c.fail(s"Can't find an implicit `${prefix}Meta` for type `${t.tpe}`")
       case tree      => tree
     }

@@ -1,12 +1,12 @@
 package io.getquill.dsl
 
 import scala.language.experimental.macros
-
 import io.getquill.quotation.NonQuotedException
+
 import scala.annotation.compileTimeOnly
 
-private[dsl] trait QueryDsl {
-  dsl: CoreDsl =>
+trait QueryDsl {
+  dsl: QuotationDsl =>
 
   def query[T]: EntityQuery[T] = macro QueryDslMacro.expandEntity[T]
 
@@ -16,14 +16,9 @@ private[dsl] trait QueryDsl {
   sealed trait Query[+T] {
 
     def map[R](f: T => R): Query[R]
-
     def flatMap[R](f: T => Query[R]): Query[R]
-
-    def concatMap[R, U](f: T => U)(implicit ev: U => Traversable[R]): Query[R]
-
     def withFilter(f: T => Boolean): Query[T]
     def filter(f: T => Boolean): Query[T]
-
     def sortBy[R](f: T => R)(implicit ord: OrdDsl#Ord[R]): Query[T]
 
     def take(n: Int): Query[T]

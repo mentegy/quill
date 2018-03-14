@@ -3,12 +3,11 @@ package io.getquill.quotation
 import io.getquill.ast._
 import scala.reflect.macros.whitebox.{ Context => MacroContext }
 import scala.reflect.NameTransformer
-import io.getquill.dsl.EncodingDsl
 import io.getquill.norm.BetaReduction
 import io.getquill.util.OptionalTypecheck
 import io.getquill.util.Messages._
 
-case class ScalarValueLifting[T, U](value: T, encoder: EncodingDsl#Encoder[U])
+case class ScalarValueLifting[T, U](value: T, tpe: Any)
 case class CaseClassValueLifting[T](value: T)
 
 trait ReifyLiftings {
@@ -27,10 +26,10 @@ trait ReifyLiftings {
 
     private def reify(lift: Lift) =
       lift match {
-        case ScalarValueLift(name, value: Tree, encoder: Tree) => Reified(value, Some(encoder))
-        case CaseClassValueLift(name, value: Tree)             => Reified(value, None)
-        case ScalarQueryLift(name, value: Tree, encoder: Tree) => Reified(value, Some(encoder))
-        case CaseClassQueryLift(name, value: Tree)             => Reified(value, None)
+        case ScalarValueLift(name, value: Tree, tpe: Tree) => Reified(value, Some(tpe))
+        case CaseClassValueLift(name, value: Tree)         => Reified(value, None)
+        case ScalarQueryLift(name, value: Tree, tpe: Tree) => Reified(value, Some(tpe))
+        case CaseClassQueryLift(name, value: Tree)         => Reified(value, None)
       }
 
     private def unparse(ast: Ast): Tree =
@@ -80,12 +79,12 @@ trait ReifyLiftings {
                 val nested =
                   q"$ref.$liftings.${encode(lift.name)}"
                 lift match {
-                  case ScalarValueLift(name, value, encoder) =>
-                    ScalarValueLift(s"$ref.$name", q"$nested.value", q"$nested.encoder")
+                  case ScalarValueLift(name, value, tpe) =>
+                    ScalarValueLift(s"$ref.$name", q"$nested.value", q"$nested.tpe")
                   case CaseClassValueLift(name, value) =>
                     CaseClassValueLift(s"$ref.$name", q"$nested.value")
-                  case ScalarQueryLift(name, value, encoder) =>
-                    ScalarQueryLift(s"$ref.$name", q"$nested.value", q"$nested.encoder")
+                  case ScalarQueryLift(name, value, tpe) =>
+                    ScalarQueryLift(s"$ref.$name", q"$nested.value", q"$nested.tpe")
                   case CaseClassQueryLift(name, value) =>
                     CaseClassQueryLift(s"$ref.$name", q"$nested.value")
                 }
@@ -105,8 +104,8 @@ trait ReifyLiftings {
             val trees =
               for ((name, Reified(value, encoder)) <- transformer.state) yield {
                 encoder match {
-                  case Some(encoder) =>
-                    q"val $name = io.getquill.quotation.ScalarValueLifting($value, $encoder)"
+                  case Some(tpe) =>
+                    q"val $name = io.getquill.quotation.ScalarValueLifting($value, $tpe)"
                   case None =>
                     q"val $name = io.getquill.quotation.CaseClassValueLifting($value)"
                 }

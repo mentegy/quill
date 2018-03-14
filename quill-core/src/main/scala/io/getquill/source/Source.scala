@@ -1,20 +1,21 @@
-package io.getquill.context.sql
+package io.getquill.source
 
-import java.time.LocalDate
+import java.time.{ LocalDate, LocalDateTime }
 
-import io.getquill.idiom.{ Idiom => BaseIdiom }
-import java.util.{ Date, UUID }
+import io.getquill.dsl.EncodingDsl
+import io.getquill.idiom.Idiom
+import io.getquill.monad.IO
 
-import io.getquill.context.Context
-import io.getquill.context.sql.dsl.SqlDsl
-import io.getquill.NamingStrategy
+import scala.language.experimental.macros
+import scala.language.higherKinds
 
-trait SqlContext[Idiom <: BaseIdiom[Naming], Naming <: NamingStrategy]
-  extends Context[Idiom, Naming]
-  with SqlDsl {
+trait Source[I <: Idiom[_]] extends EncodingDsl {
 
-  implicit def optionDecoder[T](implicit d: Decoder[T]): Decoder[Option[T]]
-  implicit def optionEncoder[T](implicit d: Encoder[T]): Encoder[Option[T]]
+  type Result[T]
+  type Prepare = PrepareRow => (List[Any], PrepareRow)
+  type Extractor[T] = ResultRow => T
+
+  def apply[T](io: IO[T]): Result[T] = macro SourceMacro.expandApply[T]
 
   implicit val stringDecoder: Decoder[String]
   implicit val bigDecimalDecoder: Decoder[BigDecimal]
@@ -26,9 +27,8 @@ trait SqlContext[Idiom <: BaseIdiom[Naming], Naming <: NamingStrategy]
   implicit val floatDecoder: Decoder[Float]
   implicit val doubleDecoder: Decoder[Double]
   implicit val byteArrayDecoder: Decoder[Array[Byte]]
-  implicit val dateDecoder: Decoder[Date]
   implicit val localDateDecoder: Decoder[LocalDate]
-  implicit val uuidDecoder: Decoder[UUID]
+  implicit val localDateTimeDecoder: Decoder[LocalDateTime]
 
   implicit val stringEncoder: Encoder[String]
   implicit val bigDecimalEncoder: Encoder[BigDecimal]
@@ -40,7 +40,9 @@ trait SqlContext[Idiom <: BaseIdiom[Naming], Naming <: NamingStrategy]
   implicit val floatEncoder: Encoder[Float]
   implicit val doubleEncoder: Encoder[Double]
   implicit val byteArrayEncoder: Encoder[Array[Byte]]
-  implicit val dateEncoder: Encoder[Date]
   implicit val localDateEncoder: Encoder[LocalDate]
-  implicit val uuidEncoder: Encoder[UUID]
+  implicit val localDateTimeEncoder: Encoder[LocalDateTime]
+
+
+  protected case class Run[T](f: () => Result[T])
 }

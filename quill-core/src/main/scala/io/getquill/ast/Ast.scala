@@ -3,13 +3,13 @@ package io.getquill.ast
 //************************************************************
 
 sealed trait Ast {
-  override def toString = {
-    import io.getquill.MirrorIdiom._
+  /*override def toString = {
+    /*import io.getquill.MirrorIdiom._
     import io.getquill.idiom.StatementInterpolator._
     implicit def liftTokenizer: Tokenizer[Lift] =
       Tokenizer[Lift](_ => stmt"?")
-    this.token.toString
-  }
+    this.token.toString*/
+  }*/
 }
 
 //************************************************************
@@ -137,11 +137,9 @@ sealed trait Lift extends Ast {
   val value: Any
 }
 
-sealed trait ScalarLift extends Lift {
-  val encoder: Any
-}
-case class ScalarValueLift(name: String, value: Any, encoder: Any) extends ScalarLift
-case class ScalarQueryLift(name: String, value: Any, encoder: Any) extends ScalarLift
+sealed trait ScalarLift extends Lift
+case class ScalarValueLift(name: String, value: Any, tpe: Any) extends ScalarLift
+case class ScalarQueryLift(name: String, value: Any, tpe: Any) extends ScalarLift
 
 sealed trait CaseClassLift extends Lift
 case class CaseClassValueLift(name: String, value: Any) extends CaseClassLift
