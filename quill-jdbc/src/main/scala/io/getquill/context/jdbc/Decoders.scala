@@ -1,9 +1,5 @@
 package io.getquill.context.jdbc
 
-import java.time.{ LocalDate, LocalDateTime }
-import java.util
-import java.util.Calendar
-
 import scala.math.BigDecimal.javaBigDecimal2bigDecimal
 
 trait Decoders {
@@ -58,28 +54,4 @@ trait Decoders {
   implicit val floatDecoder: Decoder[Float] = decoder(_.getFloat)
   implicit val doubleDecoder: Decoder[Double] = decoder(_.getDouble)
   implicit val byteArrayDecoder: Decoder[Array[Byte]] = decoder(_.getBytes)
-  implicit val dateDecoder: Decoder[util.Date] =
-    decoder((index, row) => {
-      val v = row.getTimestamp(index, Calendar.getInstance(dateTimeZone))
-      if (v == null)
-        new util.Date(0)
-      else
-        new util.Date(v.getTime)
-    })
-  implicit val localDateDecoder: Decoder[LocalDate] =
-    decoder((index, row) => {
-      val v = row.getDate(index, Calendar.getInstance(dateTimeZone))
-      if (v == null)
-        LocalDate.ofEpochDay(0)
-      else
-        v.toLocalDate
-    })
-  implicit val localDateTimeDecoder: Decoder[LocalDateTime] =
-    decoder((index, row) => {
-      val v = row.getTimestamp(index, Calendar.getInstance(dateTimeZone))
-      if (v == null)
-        LocalDate.ofEpochDay(0).atStartOfDay()
-      else
-        v.toLocalDateTime
-    })
 }

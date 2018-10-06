@@ -1,16 +1,15 @@
 package io.getquill.context.sql
 
-import java.time.LocalDate
-
 import io.getquill.idiom.{ Idiom => BaseIdiom }
-import java.util.{ Date, UUID }
+import java.util.UUID
 
-import io.getquill.context.Context
+import io.getquill.context.{ Context, DateEncoding }
 import io.getquill.context.sql.dsl.SqlDsl
 import io.getquill.NamingStrategy
 
 trait SqlContext[Idiom <: BaseIdiom, Naming <: NamingStrategy]
   extends Context[Idiom, Naming]
+  with DateEncoding
   with SqlDsl {
 
   implicit def optionDecoder[T](implicit d: Decoder[T]): Decoder[Option[T]]
@@ -26,8 +25,6 @@ trait SqlContext[Idiom <: BaseIdiom, Naming <: NamingStrategy]
   implicit val floatDecoder: Decoder[Float]
   implicit val doubleDecoder: Decoder[Double]
   implicit val byteArrayDecoder: Decoder[Array[Byte]]
-  implicit val dateDecoder: Decoder[Date]
-  implicit val localDateDecoder: Decoder[LocalDate]
   implicit val uuidDecoder: Decoder[UUID]
 
   implicit val stringEncoder: Encoder[String]
@@ -40,7 +37,5 @@ trait SqlContext[Idiom <: BaseIdiom, Naming <: NamingStrategy]
   implicit val floatEncoder: Encoder[Float]
   implicit val doubleEncoder: Encoder[Double]
   implicit val byteArrayEncoder: Encoder[Array[Byte]]
-  implicit val dateEncoder: Encoder[Date]
-  implicit val localDateEncoder: Encoder[LocalDate]
   implicit val uuidEncoder: Encoder[UUID]
 }

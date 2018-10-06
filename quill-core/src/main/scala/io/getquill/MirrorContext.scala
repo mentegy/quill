@@ -1,7 +1,7 @@
 package io.getquill
 
 import io.getquill.context.Context
-import io.getquill.context.mirror.{ MirrorDecoders, MirrorEncoders, Row }
+import io.getquill.context.mirror.{ MirrorDateEncoding, MirrorDecoders, MirrorEncoders, Row }
 import io.getquill.idiom.{ Idiom => BaseIdiom }
 import scala.util.{ Failure, Success, Try }
 import io.getquill.monad.SyncIOMonad
@@ -13,6 +13,7 @@ class MirrorContext[Idiom <: BaseIdiom, Naming <: NamingStrategy](val idiom: Idi
   extends Context[Idiom, Naming]
   with MirrorEncoders
   with MirrorDecoders
+  with MirrorDateEncoding
   with SyncIOMonad {
 
   override type PrepareRow = Row

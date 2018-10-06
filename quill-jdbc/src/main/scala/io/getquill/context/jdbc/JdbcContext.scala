@@ -21,6 +21,7 @@ abstract class JdbcContext[Dialect <: SqlIdiom, Naming <: NamingStrategy](dataSo
   with SqlContext[Dialect, Naming]
   with Encoders
   with Decoders
+  with JdbcDateEncoding
   with SyncIOMonad {
 
   private val logger = ContextLogger(classOf[JdbcContext[_, _]])

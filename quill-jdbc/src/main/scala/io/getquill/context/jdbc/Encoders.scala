@@ -1,16 +1,11 @@
 package io.getquill.context.jdbc
 
-import java.sql.{ Date, Timestamp, Types }
-import java.time.{ LocalDate, LocalDateTime }
-import java.util.{ Calendar, TimeZone }
-import java.{ sql, util }
+import java.sql.Types
 
 trait Encoders {
   this: JdbcContext[_, _] =>
 
   type Encoder[T] = JdbcEncoder[T]
-
-  protected val dateTimeZone = TimeZone.getDefault
 
   case class JdbcEncoder[T](sqlType: Int, encoder: BaseEncoder[T]) extends BaseEncoder[T] {
     override def apply(index: Index, value: T, row: PrepareRow) =
@@ -52,13 +47,4 @@ trait Encoders {
   implicit val floatEncoder: Encoder[Float] = encoder(Types.FLOAT, _.setFloat)
   implicit val doubleEncoder: Encoder[Double] = encoder(Types.DOUBLE, _.setDouble)
   implicit val byteArrayEncoder: Encoder[Array[Byte]] = encoder(Types.VARBINARY, _.setBytes)
-  implicit val dateEncoder: Encoder[util.Date] =
-    encoder(Types.TIMESTAMP, (index, value, row) =>
-      row.setTimestamp(index, new sql.Timestamp(value.getTime), Calendar.getInstance(dateTimeZone)))
-  implicit val localDateEncoder: Encoder[LocalDate] =
-    encoder(Types.DATE, (index, value, row) =>
-      row.setDate(index, Date.valueOf(value), Calendar.getInstance(dateTimeZone)))
-  implicit val localDateTimeEncoder: Encoder[LocalDateTime] =
-    encoder(Types.TIMESTAMP, (index, value, row) =>
-      row.setTimestamp(index, Timestamp.valueOf(value), Calendar.getInstance(dateTimeZone)))
 }
