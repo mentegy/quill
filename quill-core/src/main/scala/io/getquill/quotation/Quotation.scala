@@ -9,11 +9,28 @@ import io.getquill.util.Messages.RichContext
 import io.getquill.norm.BetaReduction
 import io.getquill.util.EnableReflectiveCalls
 
-case class QuotedAst(ast: Ast) extends StaticAnnotation
+case class QuotedAst(ast: EncodedAst) extends StaticAnnotation
 
-trait Quotation extends Liftables with Unliftables with Parsing with ReifyLiftings {
+case class EncodedAst(bytes: String, dynamics: List[Any])
+
+trait Quotation extends Parsing with ReifyLiftings {
   val c: Context
   import c.universe._
+
+  implicit val liftedAstLiftable = Liftable[EncodedAst] {
+    case EncodedAst(bytes, dynamics) =>
+      println(bytes)
+      println(dynamics)
+      q"io.getquill.quotation.EncodedAst($bytes, ${dynamics.asInstanceOf[List[Tree]]})"
+
+  }
+
+  implicit val astLiftable: Liftable[Ast] = Liftable[Ast](ast => q"${AstEncode(ast)}")
+
+  implicit val astUnliftable: Unliftable[Ast] = Unliftable[Ast] {
+    case q"io.getquill.quotation.EncodedAst(${ bytes: String }, ${ dynamics })" =>
+      AstDecode(EncodedAst(bytes, dynamics.asInstanceOf[List[Any]]))
+  }
 
   private val quoted = TermName("quoted")
 
@@ -25,6 +42,8 @@ trait Quotation extends Liftables with Unliftables with Parsing with ReifyLiftin
 
     val (reifiedAst, liftings) = reifyLiftings(ast)
 
+    val encodedAst = AstEncode(reifiedAst)
+
     val quotation =
       c.untypecheck {
         q"""
@@ -32,10 +51,10 @@ trait Quotation extends Liftables with Unliftables with Parsing with ReifyLiftin
  
             ..${EnableReflectiveCalls(c)}
     
-            @${c.weakTypeOf[QuotedAst]}($reifiedAst)
+            @${c.weakTypeOf[QuotedAst]}($encodedAst)
             def $quoted = ast
     
-            override def ast = $reifiedAst
+            override def encodedAst = $encodedAst
             override def toString = ast.toString
 
     

@@ -58,6 +58,11 @@ lazy val `quill-core` =
 lazy val `quill-core-jvm` = `quill-core`.jvm
 lazy val `quill-core-js` = `quill-core`.js
 
+lazy val `quill-tests` =
+  (project in file("quill-tests"))
+    .settings(commonSettings: _*)
+    .dependsOn(`quill-core-jvm`)
+
 lazy val `quill-sql` =
   crossProject(JVMPlatform, JSPlatform).crossType(superPure)
     .settings(commonSettings: _*)

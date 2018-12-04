@@ -3,17 +3,17 @@ package io.getquill.dsl
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 import scala.reflect.macros.whitebox.Context
-
 import io.getquill.ast.Ast
-import io.getquill.quotation.NonQuotedException
-import io.getquill.quotation.Quotation
+import io.getquill.quotation.{ AstDecode, EncodedAst, NonQuotedException, Quotation }
+
 import scala.annotation.compileTimeOnly
 
 private[dsl] trait QuotationDsl {
 
   trait Quoted[+T] {
-    def ast: Ast
+    def ast: Ast = AstDecode(encodedAst)
     def dynamic: Quoted[T] = this
+    def encodedAst: EncodedAst
   }
 
   def quote[T](body: Quoted[T]): Quoted[T] = macro QuotationMacro.doubleQuote[T]
